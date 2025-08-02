@@ -1,0 +1,15 @@
+FROM php:7.3.29-apache
+WORKDIR /srv/app
+RUN apt-get update -y && apt-get install -y libpng-dev libicu-dev libzip-dev libpq-dev nano
+RUN docker-php-ext-install mbstring pdo pdo_pgsql pgsql \
+    && a2enmod rewrite negotiation \
+    && docker-php-ext-install opcache \
+    && docker-php-ext-install gd \
+    && docker-php-ext-install intl \
+    && docker-php-ext-install zip
+
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+COPY . /srv/app
+RUN chown -R www-data:www-data /srv/app
+COPY .docker/vhost.conf /etc/apache2/sites-available/000-default.conf
+RUN composer install

@@ -1,0 +1,4 @@
+node_modules/
+vendor/
+resource/js
+resource/css

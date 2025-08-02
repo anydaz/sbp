@@ -1,0 +1,9 @@
+version: 1
+task_definition:
+  services:
+    app:
+      mem_limit: 450000000
+  docker_volumes:
+    - name: mydb
+      scope: shared
+      autoprovision: true

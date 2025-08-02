@@ -1,0 +1,24 @@
+version: '3.9'
+services:
+  app:
+    build:
+      context: ./
+      dockerfile: dockerfile.local
+    ports:
+      - '3050:80'
+    volumes:
+      - ./public/css:/srv/app/public/css
+      - ./public/js:/srv/app/public/js
+      - ./public/assets:/srv/app/public/assets
+      - ./app:/srv/app/app
+      - ./resources:/srv/app/resources
+      - ./database:/srv/app/database
+  pgsql:
+    build:
+      context: ./
+      dockerfile: pgsql.dockerfile
+    volumes:
+      - 'mydb:/var/lib/postgresql/data'
+    restart: 'always'
+volumes:
+  mydb:

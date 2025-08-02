@@ -1,0 +1,17 @@
+version: '3'
+services:
+  app:
+    image: andydaz/sistemtoko-app:v1.22
+    ports:
+      - '80:80'
+    links:
+    - "pgsql"
+  pgsql:
+    image: andydaz/sistemtoko-pgsql:v1.0
+    ports:
+      - '5432:5432'
+    volumes:
+      - 'mydb:/var/lib/postgresql/data'
+    restart: 'always'
+volumes:
+  mydb:
