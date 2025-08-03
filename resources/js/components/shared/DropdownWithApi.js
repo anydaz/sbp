@@ -61,6 +61,8 @@ const DropdownWithApi = ({
             return "/api/payment_types";
         } else if (type == "product-category") {
             return "/api/product_categories";
+        } else if (type == "payment-category") {
+            return "/api/payment_categories";
         }
     };
     const getData = async () => {
@@ -143,6 +145,12 @@ const DropdownWithApi = ({
                     <p> {data.name} </p>
                 </>
             );
+        } else if (type == "payment-category") {
+            return (
+                <>
+                    <p> {data.name} </p>
+                </>
+            );
         }
     };
 
@@ -153,7 +161,8 @@ const DropdownWithApi = ({
             type == "product" ||
             type == "customer" ||
             type == "payment type" ||
-            type == "product-category"
+            type == "product-category" ||
+            type == "payment-category"
         ) {
             return selected?.name;
         } else if (type == "draft sales order") {

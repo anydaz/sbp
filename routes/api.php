@@ -27,6 +27,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 	Route::resource('customers', 'App\Http\Controllers\CustomerController');
 	Route::resource('payment_types', 'App\Http\Controllers\PaymentTypeController');
+	Route::resource('payment_categories', 'App\Http\Controllers\PaymentCategoryController');
 
 	Route::resource('products', 'App\Http\Controllers\ProductController');
 	Route::resource('product_categories', 'App\Http\Controllers\ProductCategoryController');

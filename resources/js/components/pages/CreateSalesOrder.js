@@ -37,6 +37,8 @@ const CreateSalesOrder = () => {
     });
     const [onSearchProduct, setOnSearchProduct] = useState(false);
     const [selectedPaymentType, setSelectedPaymentType] = useState(null);
+    const [selectedPaymentCategory, setSelectedPaymentCategory] =
+        useState(null);
     const [salesNumber, setSalesNumber] = useState(null);
     const [details, setDetails] = useState([defaultDetail]);
     const [salesDiscount, setSalesDiscount] = useState(0);
@@ -170,6 +172,7 @@ const CreateSalesOrder = () => {
             const body = {
                 customer_id: selectedCustomer.id,
                 payment_type_id: selectedPaymentType.id,
+                payment_category_id: selectedPaymentCategory.id,
                 sales_discount: salesDiscount,
                 total_return: totalReturn,
                 draft_sales_order_id: selectedDraft?.id,
@@ -305,6 +308,7 @@ const CreateSalesOrder = () => {
                     ? dayjs(sales.date).format("YYYY-MM-DD")
                     : dayjs().format("YYYY-MM-DD")
             );
+            setSelectedPaymentCategory(sales.payment_category);
             setSelectedPaymentType(sales.payment_type);
             const details = sales.details.map((detail) => {
                 return {
@@ -442,20 +446,30 @@ const CreateSalesOrder = () => {
                                     type="customer"
                                 />
                             </div>
-                            <NumberField
-                                value={salesDiscount}
-                                label="Diskon Nota"
-                                onChange={(value) => {
-                                    setSalesDiscount(value);
-                                }}
-                                customWrapperClass={"w-[228px]"}
-                            />
                             {/* <TextField
                                 value={totalReturn || 0}
                                 label="Total Retur"
                                 disabled={true}
                                 customWrapperClass={"w-[228px]"}
                             /> */}
+
+                            <div className="w-[228px]">
+                                <label
+                                    class={`font-semibold text-xs text-gray-600 pb-1 block`}
+                                >
+                                    Jenis Pembayaran
+                                </label>
+                                <DropdownWithApi
+                                    onChange={(cat) =>
+                                        setSelectedPaymentCategory(cat)
+                                    }
+                                    selected={selectedPaymentCategory}
+                                    type="payment-category"
+                                    fetchOnRender={true}
+                                    firstDataAsDefault={!id}
+                                    disabled={id}
+                                />
+                            </div>
 
                             <NumberField
                                 label="Total Retur"
@@ -475,7 +489,7 @@ const CreateSalesOrder = () => {
                                 <label
                                     class={`font-semibold text-xs text-gray-600 pb-1 block`}
                                 >
-                                    Tipe Pembayaran
+                                    Channel Pembayaran
                                 </label>
                                 <DropdownWithApi
                                     onChange={(customer) =>

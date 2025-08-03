@@ -10,7 +10,7 @@ class SalesOrder extends Model
     use HasFactory;
 
 	public $keyType = 'string';
-    protected $fillable = ['customer_id', 'user_id', 'sales_discount', 'draft_sales_order_id',
+    protected $fillable = ['customer_id', 'payment_category_id', 'user_id', 'sales_discount', 'draft_sales_order_id',
 						   'sales_number', 'payment_type_id', 'is_pending', 'notes', 'date',
 						   'total_return'];
 
@@ -47,6 +47,11 @@ class SalesOrder extends Model
 	public function payment_type()
 	{
     	return $this->belongsTo(PaymentType::class)->active();
+	}
+
+	public function payment_category()
+	{
+    	return $this->belongsTo(PaymentCategory::class);
 	}
 
 	public function scopeActive($query)

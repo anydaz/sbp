@@ -91,7 +91,7 @@ class SalesOrderController extends Controller
      */
     public function show($id)
     {
-        $sales = SalesOrder::with('draft.user', 'payment_type', 'customer', 'user', 'details.product')->find($id);
+        $sales = SalesOrder::with('draft.user', 'payment_category', 'payment_type', 'customer', 'user', 'details.product')->find($id);
         return response()->json($sales);
     }
 
