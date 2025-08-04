@@ -64,7 +64,8 @@ const Journal = () => {
             },
             {
                 Header: "Keterangan",
-                accessor: (row) => row.description,
+                accessor: (row) =>
+                    row.isBatch ? row.description : row.account?.name || "",
                 className: "text-left",
                 Cell: ({ value, row }) => (
                     <div
@@ -81,17 +82,38 @@ const Journal = () => {
                 Header: "debit",
                 accessor: (row) => (row.isBatch ? "" : row.debit),
                 className: "text-right",
-                Cell: ({ value }) => (
-                    <div style={{ textAlign: "right" }}>{value}</div>
-                ),
+                Cell: ({ value, row }) => {
+                    if (row.original.isBatch) return null;
+
+                    return (
+                        <div style={{ textAlign: "right" }}>
+                            {value
+                                ? value.toLocaleString("id-ID", {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                  })
+                                : "-"}
+                        </div>
+                    );
+                },
             },
             {
                 Header: "kredit",
                 accessor: (row) => (row.isBatch ? "" : row.credit),
                 className: "text-right",
-                Cell: ({ value }) => (
-                    <div style={{ textAlign: "right" }}>{value}</div>
-                ),
+                Cell: ({ value, row }) => {
+                    if (row.original.isBatch) return null;
+                    return (
+                        <div style={{ textAlign: "right" }}>
+                            {value
+                                ? value.toLocaleString("id-ID", {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                  })
+                                : "-"}
+                        </div>
+                    );
+                },
             },
         ],
         []

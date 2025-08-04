@@ -79,22 +79,24 @@ class PurchaseOrderController extends Controller
 
         try {
             $purchase_data = DB::transaction(function () use ($body, $details) {
+                $details_total = array_sum(array_column($details, 'subtotal'));
+                $discount = $body['purchase_discount'] ?? 0;
+                $body['total'] = $details_total - $discount;
+
                 $purchase = PurchaseOrder::create($body);
 
                 $purchase->details()->createMany($details);
                 return $purchase;
             });
 
-            // foreach ($details as $detail) {
-            //     Product::where('id', $detail['product_id'])->increment('quantity', $detail['qty']);
-            // }
+            // Dispatch event for journal entry
+            event(new \App\Events\PurchaseOrderCreated($purchase_data));
 
             $response = PurchaseOrder::with('details.product')->find($purchase_data->id);
-
             return response()->json($response, 201);
         } catch (Exception $error) {
-
-        };
+            // ...existing code...
+        }
     }
 
     /**

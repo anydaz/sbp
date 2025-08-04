@@ -15,4 +15,14 @@ class JournalEntry extends Model
         'reference_id',
         'description',
     ];
+
+    protected $casts = [
+        'debit' => 'float',
+		'credit' => 'float',
+    ];
+
+    public function account()
+    {
+        return $this->belongsTo(Account::class);
+    }
 }

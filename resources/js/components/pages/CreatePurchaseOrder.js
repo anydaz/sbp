@@ -9,7 +9,7 @@ import { useHistory, useParams } from "react-router-dom";
 import ModalInfo from "components/shared/ModalInfo.js";
 import Footer from "components/shared/Footer";
 import { HotKeys } from "react-hotkeys";
-import { find } from "lodash";
+import { find, set } from "lodash";
 import SearchProduct from "../shared/SearchProduct";
 import useSearchProduct from "../../hooks/useSearchProduct";
 
@@ -25,6 +25,7 @@ const CreatePurchaseOrder = () => {
     const [purchaseNumber, setPurchaseNumber] = useState("");
     const [details, setDetails] = useState([defaultDetail]);
     const [purchaseDiscount, setPurchaseDiscount] = useState(0);
+    const [shippingCost, setShippingCost] = useState(0);
     const [showModal, setShowModal] = useState(false);
     const [isCalculatingDiscount, setIsCalculationDiscount] = useState(false); // flag to prevent infinite loop
     const history = useHistory();
@@ -174,6 +175,7 @@ const CreatePurchaseOrder = () => {
             const body = {
                 purchase_number: purchaseNumber,
                 purchase_discount: purchaseDiscount,
+                shipping_cost: shippingCost,
                 details: restructured_details,
             };
 
@@ -198,6 +200,7 @@ const CreatePurchaseOrder = () => {
             const purchase = response.data;
             setPurchaseNumber(purchase.purchase_number);
             setPurchaseDiscount(purchase.purchase_discount);
+            setShippingCost(purchase.shipping_cost);
             const details = purchase.details.map((detail) => {
                 return {
                     product: detail.product,
@@ -267,16 +270,16 @@ const CreatePurchaseOrder = () => {
                         onChange={(e) => {
                             setPurchaseNumber(e.target.value);
                         }}
-                        customWrapperClass={"w-full"}
+                        customWrapperClass={"w-1/2 mr-1"}
                     />
-                    {/* <NumberField
-                        value={purchaseDiscount}
-                        label="Diskon Nota"
+                    <NumberField
+                        value={shippingCost}
+                        label="Biaya Pengiriman"
                         onChange={(value) => {
-                            setPurchaseDiscount(value);
+                            setShippingCost(value);
                         }}
                         customWrapperClass={"w-1/2 ml-1"}
-                    /> */}
+                    />
                 </div>
                 <div className="flex items-center mt-2 mb-2">
                     <TextField

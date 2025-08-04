@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\DeliveryNote;
 use App\Models\DeliveryNoteDetail;
 use App\Models\Product;
+use App\Models\PurchaseOrder;
 use Illuminate\Support\Facades\DB;
 use App\Models\PurchaseOrderDetail;
 
@@ -45,6 +46,9 @@ class DeliveryNoteController extends Controller
         $body = $request->all();
         $details = $request->details;
 
+        $purchase_order_id = $body['purchase_order_id'];
+        $purchase_order = PurchaseOrder::find($purchase_order_id);
+
         try {
             $delivery_data = DB::transaction(function () use ($body, $details) {
                 $delivery = DeliveryNote::create($body);
@@ -53,14 +57,39 @@ class DeliveryNoteController extends Controller
                 return $delivery;
             });
 
+            $shipping_cost = $purchase_order->shipping_cost ?? 0;
+            $total_qty = array_sum($purchase_order->details->pluck('qty')->toArray());
+            $shipping_cost_per_item = $total_qty > 0 ? $shipping_cost / $total_qty : 0;
+
             foreach ($details as $detail) {
                 $product = Product::find($detail['product_id']);
+                $qty_before_update = $product->quantity;
+                $qty_after_update = $qty_before_update + $detail['received_qty'];
+                $cogs_before_update = $product->cogs;
+
                 // $product->increment('quantity', $detail['received_qty']);
-                $received_price = PurchaseOrderDetail::find($detail["purchase_order_detail_id"])->price;
-                $newCogs = calculateCogs($product, $detail['received_qty'], $received_price);
-                $product->quantity = $product->quantity + $detail['received_qty'];
+                $received_price = PurchaseOrderDetail::find($detail["purchase_order_detail_id"])->price ;
+                $newCogs = calculateCogs($product, $detail['received_qty'], $received_price + $shipping_cost_per_item);
+
+                $product->quantity = $qty_after_update;
                 $product->cogs = $newCogs;
                 $product->save();
+
+                // Log the product action
+                $product->logs()->createMany([
+                    [
+                        'action' => 'quantity_update',
+                        'qty_before' => $qty_before_update,
+                        'qty_after' => $qty_after_update,
+                        'note' => 'Received new products',
+                    ],
+                    [
+                        'action' => 'cogs_calculation',
+                        'cogs_before' => $cogs_before_update,
+                        'cogs_after' => $newCogs,
+                        'note' => 'COGS updated, item received at price: ' . $received_price . ' per item and shipping cost: ' . $shipping_cost_per_item . ' per item',
+                    ]
+                ]);
             }
 
             $response = DeliveryNote::with('details.product')->find($delivery_data->id);

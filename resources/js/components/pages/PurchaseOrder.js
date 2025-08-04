@@ -64,9 +64,8 @@ const PurchaseOrder = () => {
                 justifyText: "text-right",
             },
             {
-                Header: "diskon nota",
-                accessor: (data) =>
-                    data.purchase_discount.toLocaleString("id-ID"),
+                Header: "biaya pengiriman",
+                accessor: (data) => data.shipping_cost.toLocaleString("id-ID"),
             },
             {
                 Header: "final",

@@ -19,7 +19,7 @@ class DatabaseSeeder extends Seeder
             PaymentTypesTableSeeder::class,
             AccountTableSeeder::class,
             // CustomerTableSeeder::class,
-            // ProductCategorySeeder::class,
+            ProductCategorySeeder::class,
             // ProductsTableSeeder::class,
         ]);
     }

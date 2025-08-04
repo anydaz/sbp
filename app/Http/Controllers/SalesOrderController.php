@@ -68,6 +68,7 @@ class SalesOrderController extends Controller
                 $details_total = array_sum(array_column($details, 'subtotal'));
                 $discount = $body['discount'] ?? 0;
                 $body['total'] = $details_total - $discount;
+                $body['total_cogs'] = array_sum(array_column($details, 'cogs'));
 
                 // $total = $details ? array_sum(array_column($details, 'subtotal')) : 0;
                 $sales = SalesOrder::create($body);

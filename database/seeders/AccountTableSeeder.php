@@ -58,6 +58,14 @@ class AccountTableSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            [
+                'code' => '1005',
+                'name' => 'Inventory in Transit',
+                'type' => 'asset',
+                'parent_account_id' => $currentAsset,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
         ]);
 
         // ADD LIABILITY ACCOUNTS
@@ -165,7 +173,18 @@ class AccountTableSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+        ]);
 
+        // ADD COGS ACCOUNT
+        DB::table('accounts')->insert([
+            [
+                'code' => '5001',
+                'name' => 'COGS',
+                'type' => 'expense',
+                'parent_account_id' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
 
         // ADD EXPENSE ACCOUNTS

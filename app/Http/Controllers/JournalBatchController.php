@@ -14,7 +14,7 @@ class JournalBatchController extends Controller
      */
     public function index()
     {
-        return JournalBatch::with('entries')->paginate(10);
+        return JournalBatch::with('entries.account')->paginate(10);
     }
 
     /**
