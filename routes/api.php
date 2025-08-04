@@ -43,6 +43,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 	Route::resource('delivery_notes', 'App\Http\Controllers\DeliveryNoteController');
 	Route::resource('purchase_returns', 'App\Http\Controllers\PurchaseReturnController');
 
+	Route::resource('journal_batches', 'App\Http\Controllers\JournalBatchController');
+
 	Route::post('products/new/import', 'App\Http\Controllers\ProductController@import_new');
 	Route::post('products/import', 'App\Http\Controllers\ProductController@import');
 	Route::post('products/bulk_update_price', 'App\Http\Controllers\ProductController@bulk_update_price');

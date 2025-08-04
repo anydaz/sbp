@@ -12,7 +12,7 @@ class SalesOrder extends Model
 	public $keyType = 'string';
     protected $fillable = ['customer_id', 'payment_category_id', 'user_id', 'sales_discount', 'draft_sales_order_id',
 						   'sales_number', 'payment_type_id', 'is_pending', 'notes', 'date',
-						   'total_return'];
+						   'total_return', 'total'];
 
     protected $attributes = ['state' => "active"];
 

@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\PaymentType;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Events\SalesOrderCreated;
 use PDF;
 
 class SalesOrderController extends Controller
@@ -64,6 +65,11 @@ class SalesOrderController extends Controller
         try {
             // first, add saler order and details
             $sales_data = DB::transaction(function () use ($body, $details) {
+                $details_total = array_sum(array_column($details, 'subtotal'));
+                $discount = $body['discount'] ?? 0;
+                $body['total'] = $details_total - $discount;
+
+                // $total = $details ? array_sum(array_column($details, 'subtotal')) : 0;
                 $sales = SalesOrder::create($body);
 
                 $sales->details()->createMany($details);
@@ -74,6 +80,9 @@ class SalesOrderController extends Controller
             foreach ($details as $detail) {
                 Product::where('id', $detail['product_id'])->decrement('quantity', $detail['qty']);
             }
+
+            // third, create accounting entry
+            event(new SalesOrderCreated($sales_data));
 
             $response = SalesOrder::with(['payment_type','details.product'])->find($sales_data->id);
 

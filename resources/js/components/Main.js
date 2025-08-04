@@ -29,6 +29,7 @@ import UserContext, { UserProvider } from "root/context/UserContext.js";
 import Avatar from "react-avatar";
 import ProductCategory from "./pages/ProductCategory.js";
 import CreateProductCategory from "./pages/CreateProductCategory.js";
+import Journal from "./pages/Journal.js";
 
 const ROLE_DICT = {
     sales: "Staff Sales",
@@ -162,6 +163,11 @@ const ROUTES = [
         role: "admin",
         path: "/report-sales",
         component: ReportSales,
+    },
+    {
+        role: "admin",
+        path: "/journal",
+        component: Journal,
     },
 ];
 
@@ -382,6 +388,17 @@ function Main() {
                                             icon="TrendingUp"
                                             onClick={() =>
                                                 history.push("/report-purchase")
+                                            }
+                                        />
+                                    )}
+                                </div>
+                                <div className="border-b">
+                                    {isAllowedFor("admin") && (
+                                        <MenuItem
+                                            title="Jurnal Umum"
+                                            icon="BookOpen"
+                                            onClick={() =>
+                                                history.push("/journal")
                                             }
                                         />
                                     )}
