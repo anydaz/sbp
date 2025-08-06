@@ -10,11 +10,15 @@ class PurchaseOrder extends Model
     use HasFactory;
 
 	public $keyType = 'string';
-    protected $fillable = ['supplier', 'user_id', 'purchase_discount', 'purchase_number', 'total', 'shipping_cost'];
+
+    protected $fillable = ['supplier', 'user_id', 'purchase_discount', 'purchase_number',
+	'total', 'shipping_cost', 'shipping_cost_per_item', 'state'];
+
     protected $attributes = ['state' => "active"];
 
 	protected $casts = [
         'purchase_discount' => 'float',
+		'total' => 'float',
 		'shipping_cost' => 'float',
     ];
 

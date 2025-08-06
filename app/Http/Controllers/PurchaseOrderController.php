@@ -81,7 +81,8 @@ class PurchaseOrderController extends Controller
             $purchase_data = DB::transaction(function () use ($body, $details) {
                 $details_total = array_sum(array_column($details, 'subtotal'));
                 $discount = $body['purchase_discount'] ?? 0;
-                $body['total'] = $details_total - $discount;
+                $body['total'] = $details_total + $body['shipping_cost'] - $discount;
+                $body['shipping_cost_per_item'] = $body['shipping_cost'] / array_sum(array_column($details, 'qty'));
 
                 $purchase = PurchaseOrder::create($body);
 

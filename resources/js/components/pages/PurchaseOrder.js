@@ -70,14 +70,7 @@ const PurchaseOrder = () => {
             {
                 Header: "final",
                 accessor: (data) => {
-                    const total = data.details.reduce(
-                        (accum, detail) =>
-                            parseFloat(accum) + parseFloat(detail.subtotal),
-                        0
-                    );
-                    return (
-                        total - (data.purchase_discount || 0)
-                    ).toLocaleString("id-ID");
+                    return data.total.toLocaleString("id-ID");
                 },
             },
             {

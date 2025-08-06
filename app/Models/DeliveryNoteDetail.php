@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class DeliveryNoteDetail extends Model
 {
     use HasFactory;
-    protected $fillable = ['product_id', 'purchase_order_detail_id', 'received_qty'];
+    protected $fillable = ['product_id', 'purchase_order_detail_id', 'received_qty', 'price', 'received_value'];
     protected $attributes = ['state' => "active"];
 
     public function product()

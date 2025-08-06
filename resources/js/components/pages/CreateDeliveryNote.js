@@ -43,10 +43,17 @@ const CreateDeliveryNote = () => {
             .map((detail) => {
                 if (!(detail.product && detail.received_qty)) return;
 
+                const shippingCostPerItem =
+                    selectedPurchase.shipping_cost_per_item || 0;
+
                 return {
                     purchase_order_detail_id: detail.purchase_order_detail_id,
                     product_id: detail.product.id,
                     received_qty: detail.received_qty,
+                    received_value:
+                        detail.received_qty *
+                        (parseFloat(detail.price) +
+                            parseFloat(shippingCostPerItem)),
                 };
             })
             .filter((val) => val);
@@ -87,7 +94,6 @@ const CreateDeliveryNote = () => {
                 already_received: already_received,
                 product: detail.product,
                 price: detail.price,
-                qty: detail.qty,
                 received_qty: detail.qty - already_received,
             };
         });

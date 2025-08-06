@@ -10,7 +10,7 @@ class DeliveryNote extends Model
     use HasFactory;
 
 	public $keyType = 'string';
-    protected $fillable = ['purchase_order_id', 'user_id'];
+    protected $fillable = ['purchase_order_id', 'user_id', 'total'];
     protected $attributes = ['state' => "active"];
 
     /**

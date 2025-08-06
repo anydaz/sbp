@@ -48,18 +48,17 @@ class DeliveryNoteController extends Controller
 
         $purchase_order_id = $body['purchase_order_id'];
         $purchase_order = PurchaseOrder::find($purchase_order_id);
+        $shipping_cost_per_item = $purchase_order->shipping_cost_per_item ?? 0;
 
         try {
             $delivery_data = DB::transaction(function () use ($body, $details) {
+                $body['total'] = array_sum(array_column($details, 'received_value'));
                 $delivery = DeliveryNote::create($body);
 
                 $delivery->details()->createMany($details);
                 return $delivery;
             });
 
-            $shipping_cost = $purchase_order->shipping_cost ?? 0;
-            $total_qty = array_sum($purchase_order->details->pluck('qty')->toArray());
-            $shipping_cost_per_item = $total_qty > 0 ? $shipping_cost / $total_qty : 0;
 
             foreach ($details as $detail) {
                 $product = Product::find($detail['product_id']);
@@ -74,6 +73,7 @@ class DeliveryNoteController extends Controller
                 $product->quantity = $qty_after_update;
                 $product->cogs = $newCogs;
                 $product->save();
+
 
                 // Log the product action
                 $product->logs()->createMany([
@@ -91,6 +91,9 @@ class DeliveryNoteController extends Controller
                     ]
                 ]);
             }
+
+            // emmit event to create journal entry
+            event(new \App\Events\DeliveryNoteCreated($delivery_data));
 
             $response = DeliveryNote::with('details.product')->find($delivery_data->id);
 
