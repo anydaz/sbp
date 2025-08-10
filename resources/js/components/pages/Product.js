@@ -25,15 +25,10 @@ const Product = () => {
     const [products, setProducts] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [lastPage, setLastPage] = useState(1);
-    const [modalImport, setModalImport] = useState({
-        show: false,
-        type: null,
-    });
     const [modalDelete, setModalDelete] = useState({
         show: false,
         product: null,
     });
-    const [files, setFiles] = useState(null);
     const [sortBy, setSortBy] = useState({ display: "harga", column: "price" });
     const history = useHistory();
 
@@ -56,42 +51,6 @@ const Product = () => {
         setCurrentPage(response.data.current_page);
         setLastPage(response.data.last_page);
         setProducts(response.data.data);
-    };
-
-    const handleFile = (e) => {
-        let files = e.target.files;
-        setFiles(files);
-    };
-
-    const handleUploadFile = async () => {
-        let formData = new FormData();
-        formData.append("file", files[0]);
-
-        let urls = "";
-        if (modalImport.type === "new") {
-            urls = "api/products/new/import";
-        } else if (modalImport.type === "bulk_update_price") {
-            urls = "api/products/bulk_update_price";
-        } else {
-            urls = "api/products/import";
-        }
-
-        // const urls =
-        //     modalImport.type === "new"
-        //         ? "api/products/new/import"
-        //         : "api/products/import";
-
-        const response = await Api(urls, formData, "POST");
-        if (response.status === 200) {
-            setShowModalInfo(true);
-            setTimeout(() => {
-                setModalImport({ show: false, type: null });
-                getProducts();
-                setShowModalInfo(false);
-            }, 1000);
-        } else {
-            setFiles(null);
-        }
     };
 
     const handleDeleteProduct = async () => {
@@ -190,12 +149,6 @@ const Product = () => {
                             customClass="bg-yellow-400 hover:bg-yellow-500 mr-1"
                         />
                         <IconButton
-                            onClick={() => print(value.row.original.id)}
-                            icon="Printer"
-                            iconClass="text-white text-sm"
-                            customClass="bg-blue-400 hover:bg-blue-500 mr-1"
-                        />
-                        <IconButton
                             onClick={() =>
                                 setModalDelete({
                                     show: true,
@@ -227,28 +180,6 @@ const Product = () => {
                             text="Export Product"
                             onClick={() => handleExport()}
                             icon="Upload"
-                            customClass="mr-2 bg-white"
-                        />
-                        <SecondaryButton
-                            text="Import New Product"
-                            onClick={() =>
-                                setModalImport({
-                                    show: true,
-                                    type: "new",
-                                })
-                            }
-                            icon="Download"
-                            customClass="mr-2 bg-white"
-                        />
-                        <SecondaryButton
-                            text="Update Harga Jual"
-                            onClick={() =>
-                                setModalImport({
-                                    show: true,
-                                    type: "bulk_update_price",
-                                })
-                            }
-                            icon="DollarSign"
                             customClass="mr-2 bg-white"
                         />
                         <Button
@@ -291,18 +222,6 @@ const Product = () => {
                     tableInstance={tableInstance}
                 />
             </div>
-            {modalImport.show && (
-                <Modal
-                    onSubmit={handleUploadFile}
-                    onCancel={() => setModalImport({ show: false, type: null })}
-                >
-                    <input
-                        type="file"
-                        name="file"
-                        onChange={(e) => handleFile(e)}
-                    />
-                </Modal>
-            )}
             {modalDelete.show && (
                 <Modal
                     onSubmit={handleDeleteProduct}

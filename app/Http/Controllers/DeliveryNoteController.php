@@ -3,15 +3,17 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\DeliveryNote;
-use App\Models\DeliveryNoteDetail;
-use App\Models\Product;
-use App\Models\PurchaseOrder;
-use Illuminate\Support\Facades\DB;
-use App\Models\PurchaseOrderDetail;
+use App\Services\DeliveryNoteService;
 
 class DeliveryNoteController extends Controller
 {
+    protected $deliveryNoteService;
+
+    public function __construct(DeliveryNoteService $deliveryNoteService)
+    {
+        $this->deliveryNoteService = $deliveryNoteService;
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -19,7 +21,7 @@ class DeliveryNoteController extends Controller
      */
     public function index()
     {
-        return DeliveryNote::active()->with('purchase_order', 'details')->orderBy('id','desc')->paginate(10);
+        return $this->deliveryNoteService->getAllDeliveryNotes();
     }
 
     /**
@@ -40,67 +42,15 @@ class DeliveryNoteController extends Controller
      */
     public function store(Request $request)
     {
-        $user_id = auth()->user()->id;
-        $request->request->add(['user_id' => $user_id]);
-
-        $body = $request->all();
-        $details = $request->details;
-
-        $purchase_order_id = $body['purchase_order_id'];
-        $purchase_order = PurchaseOrder::find($purchase_order_id);
-        $shipping_cost_per_item = $purchase_order->shipping_cost_per_item ?? 0;
-
         try {
-            $delivery_data = DB::transaction(function () use ($body, $details) {
-                $body['total'] = array_sum(array_column($details, 'received_value'));
-                $delivery = DeliveryNote::create($body);
-
-                $delivery->details()->createMany($details);
-                return $delivery;
-            });
-
-
-            foreach ($details as $detail) {
-                $product = Product::find($detail['product_id']);
-                $qty_before_update = $product->quantity;
-                $qty_after_update = $qty_before_update + $detail['received_qty'];
-                $cogs_before_update = $product->cogs;
-
-                // $product->increment('quantity', $detail['received_qty']);
-                $received_price = PurchaseOrderDetail::find($detail["purchase_order_detail_id"])->price ;
-                $newCogs = calculateCogs($product, $detail['received_qty'], $received_price + $shipping_cost_per_item);
-
-                $product->quantity = $qty_after_update;
-                $product->cogs = $newCogs;
-                $product->save();
-
-
-                // Log the product action
-                $product->logs()->createMany([
-                    [
-                        'action' => 'quantity_update',
-                        'qty_before' => $qty_before_update,
-                        'qty_after' => $qty_after_update,
-                        'note' => 'Received new products',
-                    ],
-                    [
-                        'action' => 'cogs_calculation',
-                        'cogs_before' => $cogs_before_update,
-                        'cogs_after' => $newCogs,
-                        'note' => 'COGS updated, item received at price: ' . $received_price . ' per item and shipping cost: ' . $shipping_cost_per_item . ' per item',
-                    ]
-                ]);
-            }
-
-            // emmit event to create journal entry
-            event(new \App\Events\DeliveryNoteCreated($delivery_data));
-
-            $response = DeliveryNote::with('details.product')->find($delivery_data->id);
-
-            return response()->json($response, 201);
-        } catch (Exception $error) {
-
-        };
+            $deliveryNote = $this->deliveryNoteService->createDeliveryNote(
+                $request->all(),
+                auth()->user()->id
+            );
+            return response()->json($deliveryNote, 201);
+        } catch (\Exception $error) {
+            return response()->json(['error' => $error->getMessage()], 422);
+        }
     }
 
     /**
@@ -111,14 +61,8 @@ class DeliveryNoteController extends Controller
      */
     public function show($id)
     {
-        $delivery =
-            DeliveryNote::with(
-                            'purchase_order',
-                            'details.product',
-                            'details.purchase_order_detail.delivery_details'
-                        )
-                        ->find($id);
-        return response()->json($delivery);
+        $deliveryNote = $this->deliveryNoteService->getDeliveryNote($id);
+        return response()->json($deliveryNote);
     }
 
     /**
@@ -141,46 +85,12 @@ class DeliveryNoteController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $body = $request->all();
-        $details = $request->details;
-
         try {
-            $delivery_data = DB::transaction(function () use ($body, $details, $id) {
-                $delivery = DeliveryNote::with('details')->find($id);
-
-                $to_be_deleted_details = $delivery->details;
-                foreach($to_be_deleted_details as $detail) {
-                    $product = Product::find($detail->product_id);
-                    $received_price = $detail->purchase_order_detail->price;
-
-                    $newCogs = calculateCogs($product, -$detail->received_qty, $received_price);
-                    $product->quantity = $product->quantity - $detail->received_qty;
-                    $product->cogs = $newCogs;
-                    $product->save();
-                }
-                $delivery->details()->update(['state' => 'deleted']);
-                $delivery->details()->createMany($details);
-
-                // update quantity from new details
-                foreach ($details as $detail) {
-                    $product = Product::find($detail['product_id']);
-                    $received_price = PurchaseOrderDetail::find($detail["purchase_order_detail_id"])->price;
-                    $newCogs = calculateCogs($product, $detail["received_qty"], $received_price);
-                    $product->quantity = $product->quantity + $detail['received_qty'];
-                    $product->cogs = $newCogs;
-                    $product->save();
-                }
-
-                // update purchase
-                $delivery->update($body);
-
-                return DeliveryNote::with('details.product')->find($delivery->id);
-            });
-
-            return response()->json($delivery_data, 201);
-        } catch (Exception $error) {
-            return response()->json($error, 422);
-        };
+            $deliveryNote = $this->deliveryNoteService->updateDeliveryNote($id, $request->all());
+            return response()->json($deliveryNote, 201);
+        } catch (\Exception $error) {
+            return response()->json(['error' => $error->getMessage()], 422);
+        }
     }
 
     /**
@@ -191,27 +101,11 @@ class DeliveryNoteController extends Controller
      */
     public function destroy($id)
     {
-        $delivery = DB::transaction(function () use ($id) {
-            $delivery = DeliveryNote::with('details')->find($id);
-
-            $to_be_deleted_details = $delivery->details;
-            foreach($to_be_deleted_details as $detail) {
-                $product = Product::find($detail->product_id);
-                $received_price = $detail->purchase_order_detail->price;
-
-                $newCogs = calculateCogs($product, -$detail->received_qty, $received_price);
-                $product->quantity = $product->quantity - $detail->received_qty;
-                $product->cogs = $newCogs;
-                $product->save();
-            }
-
-            $delivery->details()->update(['state' => 'deleted']);
-            $delivery->state = "deleted";
-            $delivery->save();
-
-            return $delivery;
-        });
-
-        return response()->json($delivery);
+        try {
+            $deliveryNote = $this->deliveryNoteService->deleteDeliveryNote($id);
+            return response()->json($deliveryNote);
+        } catch (\Exception $error) {
+            return response()->json(['error' => $error->getMessage()], 422);
+        }
     }
 }
