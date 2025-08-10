@@ -75,11 +75,18 @@ class ProductService
         return Excel::download(new ProductsExport, 'products.xlsx');
     }
 
-    public function getProductLogs($id)
+    public function getProductLogs($id, $type)
     {
         $product = Product::findOrFail($id);
-        return $product->logs()
-            ->orderBy('id', 'desc')
-            ->get();
+        $query = $product->logs()
+            ->orderBy('id', 'desc');
+
+        if ($type === 'quantity') {
+            $query->where('action', 'like', '%quantity%');
+        } else if ($type === 'cogs') {
+            $query->where('action', 'like', '%cogs%');
+        }
+
+        return $query->paginate(10);
     }
 }

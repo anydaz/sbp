@@ -100,9 +100,10 @@ class ProductController extends Controller
         return $this->productService->exportProducts();
     }
 
-    public function getLogs($id)
+    public function getProductLogs(Request $request, $id)
     {
-        $logs = $this->productService->getProductLogs($id);
+        $type = $request->query('type', 'quantity'); // default to quantity if no type specified
+        $logs = $this->productService->getProductLogs($id, $type);
         return response()->json($logs);
     }
 }
