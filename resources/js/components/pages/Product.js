@@ -29,6 +29,7 @@ const Product = () => {
         show: false,
         product: null,
     });
+
     const [sortBy, setSortBy] = useState({ display: "harga", column: "price" });
     const history = useHistory();
 
@@ -147,6 +148,16 @@ const Product = () => {
                             icon="Edit"
                             iconClass="text-white text-sm"
                             customClass="bg-yellow-400 hover:bg-yellow-500 mr-1"
+                        />
+                        <IconButton
+                            onClick={() =>
+                                history.push(
+                                    `/product/${value.row.original.id}/logs`
+                                )
+                            }
+                            icon="Clock"
+                            iconClass="text-white text-sm"
+                            customClass="bg-blue-400 hover:bg-blue-500 mx-1"
                         />
                         <IconButton
                             onClick={() =>

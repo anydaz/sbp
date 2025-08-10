@@ -99,4 +99,10 @@ class ProductController extends Controller
     {
         return $this->productService->exportProducts();
     }
+
+    public function getLogs($id)
+    {
+        $logs = $this->productService->getProductLogs($id);
+        return response()->json($logs);
+    }
 }

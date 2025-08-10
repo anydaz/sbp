@@ -16,7 +16,7 @@ class CreateDeliveryNoteJournalEntry implements ShouldQueue
     {
         $deliveryNote = $event->deliveryNote;
         $inventoryInTransitAccountId = Account::where('code', '1005')->first()->id; // Inventory in Transit
-        $inventoryAccountId = Account::where('code', '1002')->first()->id; // Inventory
+        $inventoryAccountId = Account::where('code', '1004')->first()->id; // Inventory
 
         DB::transaction(function () use ($deliveryNote, $inventoryAccountId, $inventoryInTransitAccountId) {
             $batch = JournalBatch::create([

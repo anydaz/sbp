@@ -30,6 +30,7 @@ import Avatar from "react-avatar";
 import ProductCategory from "./pages/ProductCategory.js";
 import CreateProductCategory from "./pages/CreateProductCategory.js";
 import Journal from "./pages/Journal.js";
+import ProductLog from "./pages/ProductLog.js";
 
 const ROLE_DICT = {
     sales: "Staff Sales",
@@ -108,6 +109,11 @@ const ROUTES = [
         role: "backoffice",
         path: "/product",
         component: Product,
+    },
+    {
+        role: "backoffice",
+        path: "/product/:id/logs",
+        component: ProductLog,
     },
     {
         role: "backoffice",

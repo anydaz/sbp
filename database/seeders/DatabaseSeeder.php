@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
             AccountTableSeeder::class,
             // CustomerTableSeeder::class,
             ProductCategorySeeder::class,
-            // ProductsTableSeeder::class,
+            ProductsTableSeeder::class,
         ]);
     }
 }

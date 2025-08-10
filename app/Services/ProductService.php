@@ -74,4 +74,12 @@ class ProductService
     {
         return Excel::download(new ProductsExport, 'products.xlsx');
     }
+
+    public function getProductLogs($id)
+    {
+        $product = Product::findOrFail($id);
+        return $product->logs()
+            ->orderBy('id', 'desc')
+            ->get();
+    }
 }

@@ -62,6 +62,8 @@ class DeliveryNoteService
 
         return DB::transaction(function () use ($id, $data, $details) {
             $delivery = DeliveryNote::with('details')->find($id);
+            $purchaseOrder = PurchaseOrder::find($delivery->purchase_order_id);
+            $shippingCostPerItem = $purchaseOrder->shipping_cost_per_item ?? 0;
 
             // Revert previous quantities and COGS
             foreach ($delivery->details as $detail) {
@@ -85,7 +87,7 @@ class DeliveryNoteService
                     $detail['product_id'],
                     $detail['received_qty'],
                     $detail["purchase_order_detail_id"],
-                    0 // Assuming no shipping cost update on edit
+                    $shippingCostPerItem
                 );
             }
 
@@ -119,9 +121,10 @@ class DeliveryNoteService
     private function updateProductQuantityAndCogs($productId, $receivedQty, $purchaseOrderDetailId, $shippingCostPerItem)
     {
         $product = Product::find($productId);
+        $cogsBeforeUpdate = $product->cogs;
+
         $qtyBeforeUpdate = $product->quantity;
         $qtyAfterUpdate = $qtyBeforeUpdate + $receivedQty;
-        $cogsBeforeUpdate = $product->cogs;
 
         $receivedPrice = PurchaseOrderDetail::find($purchaseOrderDetailId)->price;
         $totalItemCost = $receivedPrice + $shippingCostPerItem;
@@ -152,14 +155,15 @@ class DeliveryNoteService
     {
         $product = Product::find($productId);
         $newCogs = calculateCogs($product, -$receivedQty, $receivedPrice);
-        $product->quantity = $product->quantity - $receivedQty;
-        $product->cogs = $newCogs;
+
+        $qtyBeforeUpdate = $product->quantity;
+        $qtyAfterUpdate = $qtyBeforeUpdate - $receivedQty;
 
         $product->logs()->createMany([
             [
                 'action' => 'quantity_revert',
-                'qty_before' => $product->quantity + $receivedQty,
-                'qty_after' => $product->quantity,
+                'qty_before' => $qtyBeforeUpdate,
+                'qty_after' => $qtyAfterUpdate,
                 'note' => 'Reverted quantity for updated / deleted delivery note',
             ],
             [
@@ -167,9 +171,11 @@ class DeliveryNoteService
                 'cogs_before' => $product->cogs,
                 'cogs_after' => $newCogs,
                 'note' => 'Reverted COGS for updated / deleted delivery note',
-            ]
-        ]);
+                ]
+            ]);
 
+        $product->cogs = $newCogs;
+        $product->quantity = $qtyAfterUpdate;
         $product->save();
     }
 }

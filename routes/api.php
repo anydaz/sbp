@@ -51,6 +51,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 	Route::post('products/export', 'App\Http\Controllers\ProductController@export');
 	// Route::get('products/barcode/{code}', 'App\Http\Controllers\ProductController@find_by_barcode');
 	// Route::get('products/efficiency_code/{code}', 'App\Http\Controllers\ProductController@find_by_efficiency_code');
+	Route::get('products/{id}/logs', 'App\Http\Controllers\ProductController@getLogs');
 	Route::get('products/{id}/print', 'App\Http\Controllers\ProductController@print');
 
 	Route::post('product_categories/import', 'App\Http\Controllers\ProductCategoryController@import');

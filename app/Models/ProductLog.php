@@ -9,7 +9,8 @@ class ProductLog extends Model
     protected $fillable = [
         'product_id',
         'action',
-        'qty_change',
+        'qty_before',
+        'qty_after',
         'price',
         'cogs_before',
         'cogs_after',

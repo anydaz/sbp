@@ -13,18 +13,27 @@ class ProductsTableSeeder extends Seeder
      */
     public function run()
     {
-        $products = [];
-        for($i=0; $i<25; $i++){
-            array_push($products, [
-                'name' => "Product Test $i",
-                'alias' => "Product Alias $i",
-                'barcode' => strval(1234567890 * ($i+1)),
-                'price' => 10000 * ($i+1),
-                'quantity' => 100 * ($i+1),
+        // protected $fillable = ['code', 'name', 'price', 'quantity', 'cogs', 'last_edited', 'product_category_id'];
+        $products = [
+            [
+                'product_category_id' => 1,
+                'code' => "P1",
+                'name' => "Product Test 1",
+                'price' => 100000,
+                'quantity' => 0,
                 'state' => "active",
-                'cogs' => 10000 * ($i+1),
-            ]);
-        }
+                'cogs' => 0,
+            ],
+            [
+                'product_category_id' => 1,
+                'code' => "P2",
+                'name' => "Product Test 2",
+                'price' => 80000,
+                'quantity' => 0,
+                'state' => "active",
+                'cogs' => 0,
+            ]
+        ];
 
         DB::table('products')->insert($products);
     }
