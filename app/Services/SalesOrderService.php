@@ -137,7 +137,7 @@ class SalesOrderService
                 $sales->update($data);
 
                 $updatedSales = SalesOrder::with(['payment_type','details.product'])->find($sales->id);
-                
+
                 // Dispatch update event
                 event(new SalesOrderUpdated($updatedSales, $originalSalesOrder));
 

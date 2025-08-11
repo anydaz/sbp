@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\PurchaseOrder;
 use Illuminate\Support\Facades\DB;
 use App\Events\PurchaseOrderCreated;
+use App\Events\PurchaseOrderUpdated;
+use App\Events\PurchaseOrderDeleted;
 
 class PurchaseOrderService
 {
@@ -80,12 +82,27 @@ class PurchaseOrderService
     {
         return DB::transaction(function () use ($id, $data, $details) {
             $purchase = PurchaseOrder::with('details')->findOrFail($id);
+            
+            // Store original purchase order for the event
+            $originalPurchaseOrder = clone $purchase;
 
             $purchase->details()->update(['state' => 'deleted']);
             $purchase->details()->createMany($details);
+
+            // Calculate totals
+            $details_total = array_sum(array_column($details, 'subtotal'));
+            $discount = $data['purchase_discount'] ?? 0;
+            $data['total'] = $details_total + $data['shipping_cost'] - $discount;
+            $data['shipping_cost_per_item'] = $data['shipping_cost'] / array_sum(array_column($details, 'qty'));
+            
             $purchase->update($data);
 
-            return PurchaseOrder::with('details.product')->find($purchase->id);
+            $updatedPurchase = PurchaseOrder::with('details.product')->find($purchase->id);
+            
+            // Dispatch update event
+            event(new PurchaseOrderUpdated($updatedPurchase, $originalPurchaseOrder));
+
+            return $updatedPurchase;
         });
     }
 
@@ -96,6 +113,10 @@ class PurchaseOrderService
             $purchase->details()->update(['state' => 'deleted']);
             $purchase->state = "deleted";
             $purchase->save();
+
+            // Dispatch delete event
+            event(new PurchaseOrderDeleted($purchase));
+
             return $purchase;
         });
     }

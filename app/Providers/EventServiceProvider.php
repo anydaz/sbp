@@ -30,6 +30,12 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\PurchaseOrderCreated::class => [
             \App\Listeners\CreatePurchaseJournalEntry::class,
         ],
+        \App\Events\PurchaseOrderUpdated::class => [
+            \App\Listeners\HandlePurchaseOrderJournalUpdate::class,
+        ],
+        \App\Events\PurchaseOrderDeleted::class => [
+            \App\Listeners\HandlePurchaseOrderJournalDeletion::class,
+        ],
         \App\Events\DeliveryNoteCreated::class => [
             \App\Listeners\CreateDeliveryNoteJournalEntry::class,
         ],

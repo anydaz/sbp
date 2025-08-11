@@ -16,7 +16,7 @@ class HandleSalesOrderJournalUpdate implements ShouldQueue
     {
         $salesOrder = $event->salesOrder;
         $originalSalesOrder = $event->originalSalesOrder;
-        
+
         $cashAccountId = Account::where('code', '1001')->first()->id;
         $salesRevenueAccountId = Account::where('code', '4001')->first()->id;
         $cogsAccountId = Account::where('code', '5001')->first()->id;
