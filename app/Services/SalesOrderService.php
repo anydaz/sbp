@@ -7,6 +7,8 @@ use App\Models\Product;
 use App\Models\ProductLog;
 use App\Models\PaymentType;
 use App\Events\SalesOrderCreated;
+use App\Events\SalesOrderUpdated;
+use App\Events\SalesOrderDeleted;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Exception;
@@ -105,6 +107,9 @@ class SalesOrderService
                     );
                 }
 
+                // Store original sales order for the event
+                $originalSalesOrder = clone $sales;
+
                 // Delete old details
                 $sales->details()->update(['state' => 'deleted']);
 
@@ -120,10 +125,23 @@ class SalesOrderService
                     );
                 }
 
+                // Calculate new totals
+                $details_total = array_sum(array_column($details, 'subtotal'));
+                $discount = $data['discount'] ?? 0;
+                $data['total'] = $details_total - $discount;
+                $data['total_cogs'] = array_sum(array_map(function ($detail) {
+                    return $detail['cogs'] * $detail['qty'];
+                }, $details));
+
                 // Update sales order
                 $sales->update($data);
 
-                return SalesOrder::with(['payment_type','details.product'])->find($sales->id);
+                $updatedSales = SalesOrder::with(['payment_type','details.product'])->find($sales->id);
+                
+                // Dispatch update event
+                event(new SalesOrderUpdated($updatedSales, $originalSalesOrder));
+
+                return $updatedSales;
             });
         } catch (Exception $error) {
             throw $error;
@@ -150,6 +168,9 @@ class SalesOrderService
             // Mark sales order as deleted
             $sales->state = "deleted";
             $sales->save();
+
+            // Dispatch delete event
+            event(new SalesOrderDeleted($sales));
 
             return $sales;
         });

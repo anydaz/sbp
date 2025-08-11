@@ -21,11 +21,23 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\SalesOrderCreated::class => [
             \App\Listeners\CreateJournalEntry::class,
         ],
+        \App\Events\SalesOrderUpdated::class => [
+            \App\Listeners\HandleSalesOrderJournalUpdate::class,
+        ],
+        \App\Events\SalesOrderDeleted::class => [
+            \App\Listeners\HandleSalesOrderJournalDeletion::class,
+        ],
         \App\Events\PurchaseOrderCreated::class => [
             \App\Listeners\CreatePurchaseJournalEntry::class,
         ],
         \App\Events\DeliveryNoteCreated::class => [
             \App\Listeners\CreateDeliveryNoteJournalEntry::class,
+        ],
+        \App\Events\DeliveryNoteUpdated::class => [
+            \App\Listeners\HandleDeliveryNoteJournalUpdate::class,
+        ],
+        \App\Events\DeliveryNoteDeleted::class => [
+            \App\Listeners\HandleDeliveryNoteJournalDeletion::class,
         ],
     ];
 

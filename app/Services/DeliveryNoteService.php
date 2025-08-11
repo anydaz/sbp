@@ -9,6 +9,8 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderDetail;
 use Illuminate\Support\Facades\DB;
 use App\Events\DeliveryNoteCreated;
+use App\Events\DeliveryNoteUpdated;
+use App\Events\DeliveryNoteDeleted;
 
 class DeliveryNoteService
 {
@@ -65,6 +67,9 @@ class DeliveryNoteService
             $purchaseOrder = PurchaseOrder::find($delivery->purchase_order_id);
             $shippingCostPerItem = $purchaseOrder->shipping_cost_per_item ?? 0;
 
+            // Store original delivery note for the event
+            $originalDeliveryNote = clone $delivery;
+
             // Revert previous quantities and COGS
             foreach ($delivery->details as $detail) {
                 $this->revertProductQuantityAndCogs(
@@ -93,6 +98,9 @@ class DeliveryNoteService
 
             $delivery->update($data);
 
+            // Dispatch update event with both new and original delivery note
+            event(new DeliveryNoteUpdated($delivery, $originalDeliveryNote));
+
             return DeliveryNote::with('details.product')->find($delivery->id);
         });
     }
@@ -101,6 +109,9 @@ class DeliveryNoteService
     {
         return DB::transaction(function () use ($id) {
             $delivery = DeliveryNote::with('details')->find($id);
+
+            // Dispatch delete event
+            event(new DeliveryNoteDeleted($delivery));
 
             foreach ($delivery->details as $detail) {
                 $this->revertProductQuantityAndCogs(
