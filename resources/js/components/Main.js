@@ -30,6 +30,7 @@ import Avatar from "react-avatar";
 import ProductCategory from "./pages/ProductCategory.js";
 import CreateProductCategory from "./pages/CreateProductCategory.js";
 import Journal from "./pages/Journal.js";
+import Ledger from "./pages/Ledger.js";
 import ProductLog from "./pages/ProductLog.js";
 
 const ROLE_DICT = {
@@ -174,6 +175,11 @@ const ROUTES = [
         role: "admin",
         path: "/journal",
         component: Journal,
+    },
+    {
+        role: "admin",
+        path: "/ledger",
+        component: Ledger,
     },
 ];
 
@@ -405,6 +411,15 @@ function Main() {
                                             icon="BookOpen"
                                             onClick={() =>
                                                 history.push("/journal")
+                                            }
+                                        />
+                                    )}
+                                    {isAllowedFor("admin") && (
+                                        <MenuItem
+                                            title="Buku Besar"
+                                            icon="BookOpen"
+                                            onClick={() =>
+                                                history.push("/ledger")
                                             }
                                         />
                                     )}

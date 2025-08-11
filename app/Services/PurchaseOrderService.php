@@ -82,7 +82,7 @@ class PurchaseOrderService
     {
         return DB::transaction(function () use ($id, $data, $details) {
             $purchase = PurchaseOrder::with('details')->findOrFail($id);
-            
+
             // Store original purchase order for the event
             $originalPurchaseOrder = clone $purchase;
 
@@ -94,11 +94,11 @@ class PurchaseOrderService
             $discount = $data['purchase_discount'] ?? 0;
             $data['total'] = $details_total + $data['shipping_cost'] - $discount;
             $data['shipping_cost_per_item'] = $data['shipping_cost'] / array_sum(array_column($details, 'qty'));
-            
+
             $purchase->update($data);
 
             $updatedPurchase = PurchaseOrder::with('details.product')->find($purchase->id);
-            
+
             // Dispatch update event
             event(new PurchaseOrderUpdated($updatedPurchase, $originalPurchaseOrder));
 
