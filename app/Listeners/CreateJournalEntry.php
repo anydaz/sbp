@@ -16,12 +16,16 @@ class CreateJournalEntry implements ShouldQueue
     public function handle(SalesOrderCreated $event)
     {
         $salesOrder = $event->salesOrder;
-        $cashAccountId = Account::where('code', '1001')->first()->id; // Assuming '1001' is the cash account code
-        $salesRevenueAccountId = Account::where('code', '4001')->first()->id; // Assuming '4001' is the sales revenue account code
-        $cogsAccountId = Account::where('code', '5001')->first()->id; // Assuming '5001' is the COGS account code
-        $inventoryAccountId = Account::where('code', '1004')->first()->id; // Assuming '1004' is the inventory account code
 
-        DB::transaction(function () use ($salesOrder, $cashAccountId, $salesRevenueAccountId, $cogsAccountId, $inventoryAccountId) {
+        DB::transaction(function () use ($salesOrder) {
+
+            $cashAccountId = Account::where('code', '1001')->first()->id; // Assuming '1001' is the cash account code
+            $accountReceivableAccountId = Account::where('code', '1003')->first()->id; // Assuming '1003' is the accounts receivable account code
+            $salesRevenueAccountId = Account::where('code', '4001')->first()->id; // Assuming '4001' is the sales revenue account code
+            $cogsAccountId = Account::where('code', '5001')->first()->id; // Assuming '5001' is the COGS account code
+            $inventoryAccountId = Account::where('code', '1004')->first()->id; // Assuming '1004' is the inventory account code
+            $type = $salesOrder->payment_category_id == 1 ? 'cash' : 'credit';
+
             $batch = JournalBatch::create([
                 'date' => now(),
                 'description' => 'Sale transaction #' . $salesOrder->sales_number,
@@ -31,7 +35,7 @@ class CreateJournalEntry implements ShouldQueue
 
             $batch->entries()->createMany([
                 [
-                    'account_id' => $cashAccountId,
+                    'account_id' => $type == 'cash' ? $cashAccountId : $accountReceivableAccountId,
                     'debit' => $salesOrder->total,
                     'credit' => 0,
                     'reference_type' => 'SalesOrder',

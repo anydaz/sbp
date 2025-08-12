@@ -45,9 +45,9 @@ const PurchaseOrder = () => {
             {
                 Header: "tanggal",
                 accessor: (data) => {
-                    return new Date(data.created_at).toLocaleDateString(
-                        "id-ID"
-                    );
+                    // Use the date field if available, otherwise fall back to created_at
+                    const dateToFormat = data.date || data.created_at;
+                    return new Date(dateToFormat).toLocaleDateString("id-ID");
                 },
             },
             {

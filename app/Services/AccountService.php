@@ -63,4 +63,12 @@ class AccountService
         $account->entries = $entries;
         return $account;
     }
+
+    public function getAccountsByType($type)
+    {
+        return Account::where('type', $type)
+            ->where('parent_account_id', '!=', null)
+            ->orderBy('code')
+            ->get();
+    }
 }

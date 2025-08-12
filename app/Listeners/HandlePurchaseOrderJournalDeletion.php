@@ -20,7 +20,7 @@ class HandlePurchaseOrderJournalDeletion implements ShouldQueue
 
         DB::transaction(function () use ($purchaseOrder, $cashAccountId, $inventoryInTransitAccountId) {
             $batch = JournalBatch::create([
-                'date' => now(),
+                'date' => $purchaseOrder->date,
                 'description' => 'Purchase deletion reversal #' . $purchaseOrder->purchase_number,
                 'reference_type' => 'PurchaseOrder',
                 'reference_id' => $purchaseOrder->id,

@@ -31,4 +31,13 @@ class AccountController extends Controller
         $account = $this->accountService->getAccountDetails($id);
         return response()->json($account);
     }
+
+    /**
+     * Get accounts by type
+     */
+    public function getByType($type)
+    {
+        $accounts = $this->accountService->getAccountsByType($type);
+        return response()->json($accounts);
+    }
 }

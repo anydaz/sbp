@@ -31,7 +31,9 @@ import ProductCategory from "./pages/ProductCategory.js";
 import CreateProductCategory from "./pages/CreateProductCategory.js";
 import Journal from "./pages/Journal.js";
 import Ledger from "./pages/Ledger.js";
+import CapitalContribution from "./pages/CapitalContribution.js";
 import ProductLog from "./pages/ProductLog.js";
+import ExpenseTransaction from "./pages/ExpenseTransaction.js";
 
 const ROLE_DICT = {
     sales: "Staff Sales",
@@ -180,6 +182,16 @@ const ROUTES = [
         role: "admin",
         path: "/ledger",
         component: Ledger,
+    },
+    {
+        role: "admin",
+        path: "/capital-contribution",
+        component: CapitalContribution,
+    },
+    {
+        role: "admin",
+        path: "/expense-transaction",
+        component: ExpenseTransaction,
     },
 ];
 
@@ -400,6 +412,30 @@ function Main() {
                                             icon="TrendingUp"
                                             onClick={() =>
                                                 history.push("/report-purchase")
+                                            }
+                                        />
+                                    )}
+                                </div>
+                                <div className="border-b">
+                                    {isAllowedFor("admin") && (
+                                        <MenuItem
+                                            title="Penambahan Modal"
+                                            icon="BookOpen"
+                                            onClick={() =>
+                                                history.push(
+                                                    "/capital-contribution"
+                                                )
+                                            }
+                                        />
+                                    )}
+                                    {isAllowedFor("admin") && (
+                                        <MenuItem
+                                            title="Biaya"
+                                            icon="BookOpen"
+                                            onClick={() =>
+                                                history.push(
+                                                    "/expense-transaction"
+                                                )
                                             }
                                         />
                                     )}

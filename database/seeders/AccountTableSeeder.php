@@ -238,6 +238,14 @@ class AccountTableSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            [
+                'code' => '6006',
+                'name' => 'Selling Expense',
+                'type' => 'expense',
+                'parent_account_id' => $expenses,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
     }
 }

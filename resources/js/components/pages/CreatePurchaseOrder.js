@@ -23,6 +23,8 @@ const CreatePurchaseOrder = () => {
     };
     const [onSearchProduct, setOnSearchProduct] = useState(false);
     const [purchaseNumber, setPurchaseNumber] = useState("");
+    const [supplier, setSupplier] = useState("");
+    const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
     const [details, setDetails] = useState([defaultDetail]);
     const [purchaseDiscount, setPurchaseDiscount] = useState(0);
     const [shippingCost, setShippingCost] = useState(0);
@@ -174,6 +176,8 @@ const CreatePurchaseOrder = () => {
         if (restructured_details.length > 0) {
             const body = {
                 purchase_number: purchaseNumber,
+                supplier: supplier,
+                date: date,
                 purchase_discount: purchaseDiscount,
                 shipping_cost: shippingCost,
                 details: restructured_details,
@@ -199,6 +203,8 @@ const CreatePurchaseOrder = () => {
         if (response) {
             const purchase = response.data;
             setPurchaseNumber(purchase.purchase_number);
+            setSupplier(purchase.supplier || "");
+            setDate(purchase.date || new Date().toISOString().split("T")[0]);
             setPurchaseDiscount(purchase.purchase_discount);
             setShippingCost(purchase.shipping_cost);
             const details = purchase.details.map((detail) => {
@@ -263,22 +269,43 @@ const CreatePurchaseOrder = () => {
                 withBackButton={true}
             />
             <div className="p-4 h-full flex flex-col flex-grow min-h-0">
-                <div className="flex">
+                <div className="flex mb-4">
                     <TextField
                         value={purchaseNumber}
                         label="Nomor Pembelian"
                         onChange={(e) => {
                             setPurchaseNumber(e.target.value);
                         }}
-                        customWrapperClass={"w-1/2 mr-1"}
+                        customWrapperClass={"w-1/4 mr-2"}
                     />
+                    <TextField
+                        value={supplier}
+                        label="Supplier"
+                        onChange={(e) => {
+                            setSupplier(e.target.value);
+                        }}
+                        customWrapperClass={"w-1/4 mr-2"}
+                    />
+                    <div className="w-1/4 mr-2">
+                        <label className="font-semibold text-xs text-gray-600 pb-1 block">
+                            Tanggal
+                        </label>
+                        <input
+                            type="date"
+                            value={date}
+                            onChange={(e) => {
+                                setDate(e.target.value);
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
                     <NumberField
                         value={shippingCost}
                         label="Biaya Pengiriman"
                         onChange={(value) => {
                             setShippingCost(value);
                         }}
-                        customWrapperClass={"w-1/2 ml-1"}
+                        customWrapperClass={"w-1/4"}
                     />
                 </div>
                 <div className="flex items-center mt-2 mb-2">

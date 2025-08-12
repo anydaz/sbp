@@ -18,6 +18,24 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
+        \App\Events\ExpenseTransactionCreated::class => [
+            [\App\Listeners\ExpenseTransactionJournalListener::class, 'handleCreated'],
+        ],
+        \App\Events\ExpenseTransactionUpdated::class => [
+            [\App\Listeners\ExpenseTransactionJournalListener::class, 'handleUpdated'],
+        ],
+        \App\Events\ExpenseTransactionDeleted::class => [
+            [\App\Listeners\ExpenseTransactionJournalListener::class, 'handleDeleted'],
+        ],
+        \App\Events\CapitalContributionCreated::class => [
+            [\App\Listeners\CapitalContributionJournalListener::class, 'handleCreated'],
+        ],
+        \App\Events\CapitalContributionUpdated::class => [
+            [\App\Listeners\CapitalContributionJournalListener::class, 'handleUpdated'],
+        ],
+        \App\Events\CapitalContributionDeleted::class => [
+            [\App\Listeners\CapitalContributionJournalListener::class, 'handleDeleted'],
+        ],
         \App\Events\SalesOrderCreated::class => [
             \App\Listeners\CreateJournalEntry::class,
         ],

@@ -64,7 +64,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 	// Account routes
 	Route::get('accounts', 'App\Http\Controllers\AccountController@index');
+	Route::get('accounts/type/{type}', 'App\Http\Controllers\AccountController@getByType');
 	Route::get('accounts/{id}', 'App\Http\Controllers\AccountController@show');
+
+	// Capital Contribution routes
+	Route::apiResource('capital-contributions', 'App\Http\Controllers\CapitalContributionController');
+
+	Route::apiResource('expense-transactions', 'App\Http\Controllers\ExpenseTransactionController');
 
 	Route::post('/print', 'App\Http\Controllers\PrintController@print');
 });
