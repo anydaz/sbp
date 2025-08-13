@@ -22,7 +22,7 @@ class HandlePurchaseOrderJournalUpdate implements ShouldQueue
         DB::transaction(function () use ($purchaseOrder, $originalPurchaseOrder, $cashAccountId, $inventoryInTransitAccountId) {
             // First create reversal entries for the original amounts
             $reversalBatch = JournalBatch::create([
-                'date' => $originalPurchaseOrder->date,
+                'date' => now(),
                 'description' => 'Purchase reversal for update #' . $purchaseOrder->purchase_number,
                 'reference_type' => 'PurchaseOrder',
                 'reference_id' => $purchaseOrder->id,
@@ -51,7 +51,7 @@ class HandlePurchaseOrderJournalUpdate implements ShouldQueue
 
             // Then create new entries for the updated amounts
             $newBatch = JournalBatch::create([
-                'date' => $purchaseOrder->date,
+                'date' => now(),
                 'description' => 'Updated purchase transaction #' . $purchaseOrder->purchase_number,
                 'reference_type' => 'PurchaseOrder',
                 'reference_id' => $purchaseOrder->id,

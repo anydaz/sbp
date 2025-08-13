@@ -18,7 +18,7 @@ class ExpenseTransactionJournalListener
         $cashAccountId = Account::where('code', '1001')->first()->id; // Cash account
 
         $batch = JournalBatch::create([
-            'date' => $transaction->date,
+            'date' => now(),
             'description' => 'Expense Transaction: ' . $transaction->notes,
             'reference_type' => 'ExpenseTransaction',
             'reference_id' => $transaction->id,
@@ -26,7 +26,7 @@ class ExpenseTransactionJournalListener
 
         $batch->entries()->createMany([
             [
-                'date' => $transaction->date,
+                'date' => now(),
                 'account_id' => $transaction->account_id,  // Expense account
                 'debit' => $transaction->amount,
                 'reference_type' => 'ExpenseTransaction',
@@ -35,7 +35,7 @@ class ExpenseTransactionJournalListener
                 'credit' => 0
             ],
             [
-                'date' => $transaction->date,
+                'date' => now(),
                 'account_id' => $cashAccountId,  // Cash account
                 'debit' => 0,
                 'reference_type' => 'ExpenseTransaction',

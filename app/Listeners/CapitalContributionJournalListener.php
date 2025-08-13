@@ -20,7 +20,7 @@ class CapitalContributionJournalListener
         $equityAccountId = Account::where('code', '3001')->first()->id; // Assuming '3001' is the owner's equity account code
 
         $batch = JournalBatch::create([
-            'date' => $contribution->date,
+            'date' => now(),
             'description' => 'Capital Contribution: ' . $contribution->notes,
             'reference_type' => 'CapitalContribution',
             'reference_id' => $contribution->id,
@@ -28,7 +28,7 @@ class CapitalContributionJournalListener
 
         $batch->entries()->createMany([
             [
-                'date' => $contribution->date,
+                'date' => now(),
                 'account_id' => $cashAccountId,
                 'debit' => $contribution->amount,
                 'reference_type' => 'CapitalContribution',
@@ -37,7 +37,7 @@ class CapitalContributionJournalListener
                 'credit' => 0
             ],
             [
-                'date' => $contribution->date,
+                'date' => now(),
                 'account_id' => $equityAccountId,
                 'debit' => 0,
                 'reference_type' => 'CapitalContribution',

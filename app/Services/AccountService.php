@@ -10,7 +10,7 @@ class AccountService
 {
     public function getAllAccounts()
     {
-        $accounts = Account::where('parent_account_id', '!=', null)->get();
+        $accounts = Account::where('parent_account_id', '!=', null)->orWhere('code', '=', 5001)->get();
 
         foreach ($accounts as $account) {
             // Get total debits and credits

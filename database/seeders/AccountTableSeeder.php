@@ -240,7 +240,7 @@ class AccountTableSeeder extends Seeder
             ],
             [
                 'code' => '6006',
-                'name' => 'Selling Expense',
+                'name' => 'Advertising Expense',
                 'type' => 'expense',
                 'parent_account_id' => $expenses,
                 'created_at' => now(),
