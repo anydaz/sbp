@@ -23,7 +23,8 @@ class CreatePurchaseJournalEntry implements ShouldQueue
                 'date' => $purchaseOrder->date,
                 'description' => 'Purchase transaction #' . $purchaseOrder->purchase_number,
                 'reference_type' => 'PurchaseOrder',
-                'reference_id' => now(),
+                'reference_id' => $purchaseOrder->id,
+                'date' => now()
             ]);
 
             $batch->entries()->createMany([
