@@ -15,12 +15,16 @@ class HandleSalesOrderJournalDeletion implements ShouldQueue
     public function handle(SalesOrderDeleted $event)
     {
         $salesOrder = $event->salesOrder;
-        $cashAccountId = Account::where('code', '1001')->first()->id;
+        $cashAccountId = Account::where('code', '1001')->first()->id; // Cash
+        $accountReceivableAccountId = Account::where('code', '1003')->first()->id; // Accounts Receivable
         $salesRevenueAccountId = Account::where('code', '4001')->first()->id;
         $cogsAccountId = Account::where('code', '5001')->first()->id;
         $inventoryAccountId = Account::where('code', '1004')->first()->id;
+        
+        // Determine payment type based on payment_category_id (1 = Cash, 2 = Credit)
+        $paymentType = $salesOrder->payment_category_id == 1 ? 'cash' : 'credit';
 
-        DB::transaction(function () use ($salesOrder, $cashAccountId, $salesRevenueAccountId, $cogsAccountId, $inventoryAccountId) {
+        DB::transaction(function () use ($salesOrder, $cashAccountId, $accountReceivableAccountId, $salesRevenueAccountId, $cogsAccountId, $inventoryAccountId, $paymentType) {
             $batch = JournalBatch::create([
                 'date' => now(),
                 'description' => 'Sale deletion reversal #' . $salesOrder->sales_number,
@@ -30,12 +34,12 @@ class HandleSalesOrderJournalDeletion implements ShouldQueue
 
             $batch->entries()->createMany([
                 [
-                    'account_id' => $cashAccountId,
+                    'account_id' => $paymentType == 'cash' ? $cashAccountId : $accountReceivableAccountId,
                     'debit' => 0,
                     'credit' => $salesOrder->total,
                     'reference_type' => 'SalesOrder',
                     'reference_id' => $salesOrder->id,
-                    'description' => 'Reverse cash received for deleted sale',
+                    'description' => $paymentType == 'cash' ? 'Reverse cash received for deleted sale' : 'Reverse accounts receivable for deleted sale',
                     'date' => now(),
                 ],
                 [

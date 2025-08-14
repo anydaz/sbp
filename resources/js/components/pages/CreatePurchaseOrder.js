@@ -12,6 +12,7 @@ import { HotKeys } from "react-hotkeys";
 import { find, set } from "lodash";
 import SearchProduct from "../shared/SearchProduct";
 import useSearchProduct from "../../hooks/useSearchProduct";
+import Calendar from "../shared/Calendar";
 
 const CreatePurchaseOrder = () => {
     const defaultDetail = {
@@ -22,6 +23,8 @@ const CreatePurchaseOrder = () => {
         subtotal: 0,
     };
     const [onSearchProduct, setOnSearchProduct] = useState(false);
+    const [selectedPaymentCategory, setSelectedPaymentCategory] =
+        useState(null);
     const [purchaseNumber, setPurchaseNumber] = useState("");
     const [supplier, setSupplier] = useState("");
     const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
@@ -180,6 +183,7 @@ const CreatePurchaseOrder = () => {
                 date: date,
                 purchase_discount: purchaseDiscount,
                 shipping_cost: shippingCost,
+                payment_category_id: selectedPaymentCategory?.id,
                 details: restructured_details,
             };
 
@@ -207,6 +211,7 @@ const CreatePurchaseOrder = () => {
             setDate(purchase.date || new Date().toISOString().split("T")[0]);
             setPurchaseDiscount(purchase.purchase_discount);
             setShippingCost(purchase.shipping_cost);
+            setSelectedPaymentCategory(purchase.payment_category || null);
             const details = purchase.details.map((detail) => {
                 return {
                     product: detail.product,
@@ -286,7 +291,7 @@ const CreatePurchaseOrder = () => {
                         }}
                         customWrapperClass={"w-1/4 mr-2"}
                     />
-                    <div className="w-1/4 mr-2">
+                    {/* <div className="w-1/4 mr-2">
                         <label className="font-semibold text-xs text-gray-600 pb-1 block">
                             Tanggal
                         </label>
@@ -298,6 +303,21 @@ const CreatePurchaseOrder = () => {
                             }}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
+                    </div> */}
+                    <div className="w-1/4 mr-2">
+                        <label
+                            class={`font-semibold text-xs text-gray-600 pb-1 block`}
+                        >
+                            Jenis Pembayaran
+                        </label>
+                        <DropdownWithApi
+                            onChange={(cat) => setSelectedPaymentCategory(cat)}
+                            selected={selectedPaymentCategory}
+                            type="payment-category"
+                            fetchOnRender={true}
+                            firstDataAsDefault={!id}
+                            disabled={id}
+                        />
                     </div>
                     <NumberField
                         value={shippingCost}
@@ -308,26 +328,35 @@ const CreatePurchaseOrder = () => {
                         customWrapperClass={"w-1/4"}
                     />
                 </div>
-                <div className="flex items-center mt-2 mb-2">
-                    <TextField
-                        defaultValue=""
-                        label="Input Kode Produk"
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                                e.preventDefault();
-                                onFindProduct(e.target.value);
-                                e.target.value = ""; // Clear input after finding product
-                            }
-                        }}
-                        customWrapperClass="w-1/5"
-                    />
-                    <IconButton
-                        icon="Search"
-                        onClick={() => {
-                            setOnSearchProduct(true);
-                        }}
-                        customClass="ml-2"
-                    />
+                <div className="flex items-start mt-2 mb-2 gap-[8px]">
+                    <div className="w-[228px] flex items-center mt-2 mb-2">
+                        <TextField
+                            defaultValue=""
+                            label="Input Kode Produk"
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    onFindProduct(e.target.value);
+                                    e.target.value = ""; // Clear input after finding product
+                                }
+                            }}
+                        />
+                        <IconButton
+                            icon="Search"
+                            onClick={() => {
+                                setOnSearchProduct(true);
+                            }}
+                            customClass="ml-2"
+                        />
+                    </div>
+                    <div className="w-[228px]">
+                        <label
+                            class={`font-semibold text-xs text-gray-600 pb-1 block`}
+                        >
+                            Tanggal
+                        </label>
+                        <Calendar value={date} onChange={setDate} />
+                    </div>
                 </div>
                 <div className="flex justify-between">
                     <div className="w-12">

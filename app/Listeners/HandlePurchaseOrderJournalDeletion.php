@@ -16,9 +16,13 @@ class HandlePurchaseOrderJournalDeletion implements ShouldQueue
     {
         $purchaseOrder = $event->purchaseOrder;
         $cashAccountId = Account::where('code', '1001')->first()->id; // Cash
+        $accountPayableAccountId = Account::where('code', '2001')->first()->id; // Accounts Payable
         $inventoryInTransitAccountId = Account::where('code', '1005')->first()->id; // Inventory in Transit
+        
+        // Determine payment type based on payment_category_id (1 = Cash, 2 = Credit)
+        $paymentType = $purchaseOrder->payment_category_id == 1 ? 'cash' : 'credit';
 
-        DB::transaction(function () use ($purchaseOrder, $cashAccountId, $inventoryInTransitAccountId) {
+        DB::transaction(function () use ($purchaseOrder, $cashAccountId, $accountPayableAccountId, $inventoryInTransitAccountId, $paymentType) {
             $batch = JournalBatch::create([
                 'date' => now(),
                 'description' => 'Purchase deletion reversal #' . $purchaseOrder->purchase_number,
@@ -37,12 +41,12 @@ class HandlePurchaseOrderJournalDeletion implements ShouldQueue
                     'date' => now(),
                 ],
                 [
-                    'account_id' => $cashAccountId,
+                    'account_id' => $paymentType == 'cash' ? $cashAccountId : $accountPayableAccountId,
                     'debit' => $purchaseOrder->total,
                     'credit' => 0,
                     'reference_type' => 'PurchaseOrder',
                     'reference_id' => $purchaseOrder->id,
-                    'description' => 'Reverse cash paid for deleted purchase',
+                    'description' => $paymentType == 'cash' ? 'Reverse cash paid for deleted purchase' : 'Reverse accounts payable for deleted purchase',
                     'date' => now(),
                 ]
             ]);

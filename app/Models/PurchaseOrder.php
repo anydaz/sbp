@@ -12,7 +12,7 @@ class PurchaseOrder extends Model
 	public $keyType = 'string';
 
     protected $fillable = ['supplier', 'user_id', 'purchase_discount', 'purchase_number',
-	'total', 'shipping_cost', 'shipping_cost_per_item', 'state', 'date'];
+	'total', 'shipping_cost', 'shipping_cost_per_item', 'state', 'date', 'payment_category_id'];
 
     protected $attributes = ['state' => "active"];
 
@@ -39,6 +39,11 @@ class PurchaseOrder extends Model
 	public function details()
 	{
     	return $this->hasMany(PurchaseOrderDetail::class)->active();
+	}
+
+	public function payment_category()
+	{
+		return $this->belongsTo(PaymentCategory::class);
 	}
 
 	public function scopeActive($query)

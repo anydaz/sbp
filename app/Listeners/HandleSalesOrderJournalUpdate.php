@@ -17,12 +17,17 @@ class HandleSalesOrderJournalUpdate implements ShouldQueue
         $salesOrder = $event->salesOrder;
         $originalSalesOrder = $event->originalSalesOrder;
 
-        $cashAccountId = Account::where('code', '1001')->first()->id;
+        $cashAccountId = Account::where('code', '1001')->first()->id; // Cash
+        $accountReceivableAccountId = Account::where('code', '1003')->first()->id; // Accounts Receivable
         $salesRevenueAccountId = Account::where('code', '4001')->first()->id;
         $cogsAccountId = Account::where('code', '5001')->first()->id;
         $inventoryAccountId = Account::where('code', '1004')->first()->id;
+        
+        // Determine payment types for both original and new sales orders
+        $originalPaymentType = $originalSalesOrder->payment_category_id == 1 ? 'cash' : 'credit';
+        $newPaymentType = $salesOrder->payment_category_id == 1 ? 'cash' : 'credit';
 
-        DB::transaction(function () use ($salesOrder, $originalSalesOrder, $cashAccountId, $salesRevenueAccountId, $cogsAccountId, $inventoryAccountId) {
+        DB::transaction(function () use ($salesOrder, $originalSalesOrder, $cashAccountId, $accountReceivableAccountId, $salesRevenueAccountId, $cogsAccountId, $inventoryAccountId, $originalPaymentType, $newPaymentType) {
             // First create reversal entries for the original amounts
             $reversalBatch = JournalBatch::create([
                 'date' => now(),
@@ -33,12 +38,12 @@ class HandleSalesOrderJournalUpdate implements ShouldQueue
 
             $reversalBatch->entries()->createMany([
                 [
-                    'account_id' => $cashAccountId,
+                    'account_id' => $originalPaymentType == 'cash' ? $cashAccountId : $accountReceivableAccountId,
                     'debit' => 0,
                     'credit' => $originalSalesOrder->total,
                     'reference_type' => 'SalesOrder',
                     'reference_id' => $salesOrder->id,
-                    'description' => 'Reverse cash received for updated sale',
+                    'description' => $originalPaymentType == 'cash' ? 'Reverse cash received for updated sale' : 'Reverse accounts receivable for updated sale',
                     'date' => now(),
                 ],
                 [
@@ -80,12 +85,12 @@ class HandleSalesOrderJournalUpdate implements ShouldQueue
 
             $newBatch->entries()->createMany([
                 [
-                    'account_id' => $cashAccountId,
+                    'account_id' => $newPaymentType == 'cash' ? $cashAccountId : $accountReceivableAccountId,
                     'debit' => $salesOrder->total,
                     'credit' => 0,
                     'reference_type' => 'SalesOrder',
                     'reference_id' => $salesOrder->id,
-                    'description' => 'Cash received for updated sale',
+                    'description' => $newPaymentType == 'cash' ? 'Cash received for updated sale' : 'Accounts receivable for updated sale',
                     'date' => now(),
                 ],
                 [

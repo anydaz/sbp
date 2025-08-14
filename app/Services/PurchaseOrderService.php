@@ -75,7 +75,7 @@ class PurchaseOrderService
 
     public function getPurchaseOrder($id)
     {
-        return PurchaseOrder::with('user', 'details.product')->findOrFail($id);
+        return PurchaseOrder::with('user', 'payment_category', 'details.product')->findOrFail($id);
     }
 
     public function updatePurchaseOrder($id, $data, $details)

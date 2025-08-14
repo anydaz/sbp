@@ -17,9 +17,14 @@ class HandlePurchaseOrderJournalUpdate implements ShouldQueue
         $purchaseOrder = $event->purchaseOrder;
         $originalPurchaseOrder = $event->originalPurchaseOrder;
         $cashAccountId = Account::where('code', '1001')->first()->id; // Cash
+        $accountPayableAccountId = Account::where('code', '2001')->first()->id; // Accounts Payable
         $inventoryInTransitAccountId = Account::where('code', '1005')->first()->id; // Inventory in Transit
+        
+        // Determine payment types for both original and new purchase orders
+        $originalPaymentType = $originalPurchaseOrder->payment_category_id == 1 ? 'cash' : 'credit';
+        $newPaymentType = $purchaseOrder->payment_category_id == 1 ? 'cash' : 'credit';
 
-        DB::transaction(function () use ($purchaseOrder, $originalPurchaseOrder, $cashAccountId, $inventoryInTransitAccountId) {
+        DB::transaction(function () use ($purchaseOrder, $originalPurchaseOrder, $cashAccountId, $accountPayableAccountId, $inventoryInTransitAccountId, $originalPaymentType, $newPaymentType) {
             // First create reversal entries for the original amounts
             $reversalBatch = JournalBatch::create([
                 'date' => now(),
@@ -39,12 +44,12 @@ class HandlePurchaseOrderJournalUpdate implements ShouldQueue
                     'date' => now(),
                 ],
                 [
-                    'account_id' => $cashAccountId,
+                    'account_id' => $originalPaymentType == 'cash' ? $cashAccountId : $accountPayableAccountId,
                     'debit' => $originalPurchaseOrder->total,
                     'credit' => 0,
                     'reference_type' => 'PurchaseOrder',
                     'reference_id' => $purchaseOrder->id,
-                    'description' => 'Reverse cash paid for updated purchase',
+                    'description' => $originalPaymentType == 'cash' ? 'Reverse cash paid for updated purchase' : 'Reverse accounts payable for updated purchase',
                     'date' => now(),
                 ]
             ]);
@@ -68,12 +73,12 @@ class HandlePurchaseOrderJournalUpdate implements ShouldQueue
                     'date' => now(),
                 ],
                 [
-                    'account_id' => $cashAccountId,
+                    'account_id' => $newPaymentType == 'cash' ? $cashAccountId : $accountPayableAccountId,
                     'debit' => 0,
                     'credit' => $purchaseOrder->total,
                     'reference_type' => 'PurchaseOrder',
                     'reference_id' => $purchaseOrder->id,
-                    'description' => 'Updated cash paid for purchase',
+                    'description' => $newPaymentType == 'cash' ? 'Updated cash paid for purchase' : 'Updated accounts payable for purchase',
                     'date' => now(),
                 ]
             ]);

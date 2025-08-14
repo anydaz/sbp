@@ -16,9 +16,13 @@ class CreatePurchaseJournalEntry implements ShouldQueue
     {
         $purchaseOrder = $event->purchaseOrder;
         $cashAccountId = Account::where('code', '1001')->first()->id; // Cash
+        $accountPayableAccountId = Account::where('code', '2001')->first()->id; // Accounts Payable
         $inventoryInTransitAccountId = Account::where('code', '1005')->first()->id; // Inventory in Transit
+        
+        // Determine payment type based on payment_category_id (1 = Cash, 2 = Credit)
+        $paymentType = $purchaseOrder->payment_category_id == 1 ? 'cash' : 'credit';
 
-        DB::transaction(function () use ($purchaseOrder, $cashAccountId, $inventoryInTransitAccountId) {
+        DB::transaction(function () use ($purchaseOrder, $cashAccountId, $accountPayableAccountId, $inventoryInTransitAccountId, $paymentType) {
             $batch = JournalBatch::create([
                 'date' => $purchaseOrder->date,
                 'description' => 'Purchase transaction #' . $purchaseOrder->purchase_number,
@@ -38,12 +42,12 @@ class CreatePurchaseJournalEntry implements ShouldQueue
                     'date' => now(),
                 ],
                 [
-                    'account_id' => $cashAccountId,
+                    'account_id' => $paymentType == 'cash' ? $cashAccountId : $accountPayableAccountId,
                     'debit' => 0,
                     'credit' => $purchaseOrder->total,
                     'reference_type' => 'PurchaseOrder',
                     'reference_id' => $purchaseOrder->id,
-                    'description' => 'Cash paid for purchase',
+                    'description' => $paymentType == 'cash' ? 'Cash paid for purchase' : 'Credit purchase - accounts payable',
                     'date' => now(),
                 ]
             ]);
