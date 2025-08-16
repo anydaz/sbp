@@ -61,6 +61,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 	Route::get('report/sales', 'App\Http\Controllers\ReportController@report_sales');
 	Route::post('report/sales/export', 'App\Http\Controllers\ReportController@export_sales');
 	Route::get('report/purchase', 'App\Http\Controllers\ReportController@report_purchase');
+	Route::get('report/profit-loss', 'App\Http\Controllers\ReportController@profit_loss');
 
 	// Account routes
 	Route::get('accounts', 'App\Http\Controllers\AccountController@index');

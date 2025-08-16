@@ -24,6 +24,7 @@ import PurchaseReturn from "./pages/PurchaseReturn.js";
 import CreatePurchaseReturn from "./pages/CreatePurchaseReturn.js";
 import ReportPurchase from "./pages/ReportPurchase.js";
 import ReportSales from "./pages/ReportSales.js";
+import ReportProfitLoss from "./pages/ReportProfitLoss.js";
 import Api from "root/api.js";
 import UserContext, { UserProvider } from "root/context/UserContext.js";
 import Avatar from "react-avatar";
@@ -172,6 +173,11 @@ const ROUTES = [
         role: "admin",
         path: "/report-sales",
         component: ReportSales,
+    },
+    {
+        role: "admin",
+        path: "/report-profit-loss",
+        component: ReportProfitLoss,
     },
     {
         role: "admin",
@@ -412,6 +418,17 @@ function Main() {
                                             icon="TrendingUp"
                                             onClick={() =>
                                                 history.push("/report-purchase")
+                                            }
+                                        />
+                                    )}
+                                    {isAllowedFor("admin") && (
+                                        <MenuItem
+                                            title="Laporan Laba Rugi"
+                                            icon="PieChart"
+                                            onClick={() =>
+                                                history.push(
+                                                    "/report-profit-loss"
+                                                )
                                             }
                                         />
                                     )}
