@@ -30,6 +30,7 @@ const CreatePurchaseOrder = () => {
     const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
     const [details, setDetails] = useState([defaultDetail]);
     const [purchaseDiscount, setPurchaseDiscount] = useState(0);
+    const [downPayment, setDownPayment] = useState(0);
     const [shippingCost, setShippingCost] = useState(0);
     const [showModal, setShowModal] = useState(false);
     const [isCalculatingDiscount, setIsCalculationDiscount] = useState(false); // flag to prevent infinite loop
@@ -155,7 +156,12 @@ const CreatePurchaseOrder = () => {
         const total = details.reduce((accum, detail) => {
             return accum + parseFloat(detail.subtotal);
         }, 0);
-        return total - purchaseDiscount;
+        return total + shippingCost - purchaseDiscount;
+    };
+
+    const calculateRemainingBalance = () => {
+        const total = calculateTotal();
+        return total - downPayment;
     };
 
     const handleSave = async () => {
@@ -182,6 +188,7 @@ const CreatePurchaseOrder = () => {
                 supplier: supplier,
                 date: date,
                 purchase_discount: purchaseDiscount,
+                down_payment: downPayment,
                 shipping_cost: shippingCost,
                 payment_category_id: selectedPaymentCategory?.id,
                 details: restructured_details,
@@ -210,6 +217,7 @@ const CreatePurchaseOrder = () => {
             setSupplier(purchase.supplier || "");
             setDate(purchase.date || new Date().toISOString().split("T")[0]);
             setPurchaseDiscount(purchase.purchase_discount);
+            setDownPayment(purchase.down_payment || 0);
             setShippingCost(purchase.shipping_cost);
             setSelectedPaymentCategory(purchase.payment_category || null);
             const details = purchase.details.map((detail) => {
@@ -311,7 +319,13 @@ const CreatePurchaseOrder = () => {
                             Jenis Pembayaran
                         </label>
                         <DropdownWithApi
-                            onChange={(cat) => setSelectedPaymentCategory(cat)}
+                            onChange={(cat) => {
+                                setSelectedPaymentCategory(cat);
+                                // Reset down payment if cash is selected
+                                if (cat?.code === "CA") {
+                                    setDownPayment(0);
+                                }
+                            }}
                             selected={selectedPaymentCategory}
                             type="payment-category"
                             fetchOnRender={true}
@@ -326,6 +340,25 @@ const CreatePurchaseOrder = () => {
                             setShippingCost(value);
                         }}
                         customWrapperClass={"w-1/4"}
+                    />
+                </div>
+                <div className="flex mb-4">
+                    <NumberField
+                        value={downPayment}
+                        label="Uang Muka"
+                        onChange={(value) => {
+                            setDownPayment(value);
+                        }}
+                        disabled={selectedPaymentCategory?.code === "CA"} // Disable for cash payments
+                        customWrapperClass={"w-1/4 mr-2"}
+                    />
+                    <NumberField
+                        value={purchaseDiscount}
+                        label="Diskon Pembelian"
+                        onChange={(value) => {
+                            setPurchaseDiscount(value);
+                        }}
+                        customWrapperClass={"w-1/4 mr-2"}
                     />
                 </div>
                 <div className="flex items-start mt-2 mb-2 gap-[8px]">
@@ -556,7 +589,13 @@ const CreatePurchaseOrder = () => {
                 {showModal && <ModalInfo />}
             </div>
             <Footer
-                text={"Total: " + calculateTotal().toLocaleString("id-ID")}
+                text={`Total: ${calculateTotal().toLocaleString(
+                    "id-ID"
+                )} | Uang Muka: ${downPayment.toLocaleString(
+                    "id-ID"
+                )} | Sisa: ${calculateRemainingBalance().toLocaleString(
+                    "id-ID"
+                )}`}
             />
         </HotKeys>
     );

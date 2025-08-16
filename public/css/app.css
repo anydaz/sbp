@@ -874,11 +874,11 @@ video {
 .w-1\/4 {
 	width: 25%;
 }
-.w-1\/5 {
-	width: 20%;
-}
 .w-\[228px\] {
 	width: 228px;
+}
+.w-1\/5 {
+	width: 20%;
 }
 .w-24 {
 	width: 6rem;

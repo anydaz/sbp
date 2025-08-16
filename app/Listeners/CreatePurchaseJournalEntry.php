@@ -18,7 +18,7 @@ class CreatePurchaseJournalEntry implements ShouldQueue
         $cashAccountId = Account::where('code', '1001')->first()->id; // Cash
         $accountPayableAccountId = Account::where('code', '2001')->first()->id; // Accounts Payable
         $inventoryInTransitAccountId = Account::where('code', '1005')->first()->id; // Inventory in Transit
-        
+
         // Determine payment type based on payment_category_id (1 = Cash, 2 = Credit)
         $paymentType = $purchaseOrder->payment_category_id == 1 ? 'cash' : 'credit';
 
@@ -31,7 +31,7 @@ class CreatePurchaseJournalEntry implements ShouldQueue
                 'date' => now()
             ]);
 
-            $batch->entries()->createMany([
+            $journalEntries = [
                 [
                     'account_id' => $inventoryInTransitAccountId,
                     'debit' => $purchaseOrder->total,
@@ -40,17 +40,63 @@ class CreatePurchaseJournalEntry implements ShouldQueue
                     'reference_id' => $purchaseOrder->id,
                     'description' => 'Inventory in transit for purchase',
                     'date' => now(),
-                ],
-                [
-                    'account_id' => $paymentType == 'cash' ? $cashAccountId : $accountPayableAccountId,
+                ]
+            ];
+
+            if ($paymentType == 'cash') {
+                // For cash purchases, full amount should be paid immediately (no down payment logic)
+                $journalEntries[] = [
+                    'account_id' => $cashAccountId,
                     'debit' => 0,
                     'credit' => $purchaseOrder->total,
                     'reference_type' => 'PurchaseOrder',
                     'reference_id' => $purchaseOrder->id,
-                    'description' => $paymentType == 'cash' ? 'Cash paid for purchase' : 'Credit purchase - accounts payable',
+                    'description' => 'Cash paid for purchase',
                     'date' => now(),
-                ]
-            ]);
+                ];
+            } else {
+                // For credit purchases with down payment
+
+                if ($purchaseOrder->down_payment > 0) {
+                    // Down payment in cash
+                    $journalEntries[] = [
+                        'account_id' => $cashAccountId,
+                        'debit' => 0,
+                        'credit' => $purchaseOrder->down_payment,
+                        'reference_type' => 'PurchaseOrder',
+                        'reference_id' => $purchaseOrder->id,
+                        'description' => 'Cash down payment for credit purchase',
+                        'date' => now(),
+                    ];
+
+                    // Remaining balance as accounts payable
+                    $remainingBalance = $purchaseOrder->total - $purchaseOrder->down_payment;
+                    if ($remainingBalance > 0) {
+                        $journalEntries[] = [
+                            'account_id' => $accountPayableAccountId,
+                            'debit' => 0,
+                            'credit' => $remainingBalance,
+                            'reference_type' => 'PurchaseOrder',
+                            'reference_id' => $purchaseOrder->id,
+                            'description' => 'Remaining balance payable for credit purchase',
+                            'date' => now(),
+                        ];
+                    }
+                } else {
+                    // Full credit purchase - no down payment
+                    $journalEntries[] = [
+                        'account_id' => $accountPayableAccountId,
+                        'debit' => 0,
+                        'credit' => $purchaseOrder->total,
+                        'reference_type' => 'PurchaseOrder',
+                        'reference_id' => $purchaseOrder->id,
+                        'description' => 'Credit purchase - accounts payable',
+                        'date' => now(),
+                    ];
+                }
+            }
+
+            $batch->entries()->createMany($journalEntries);
         });
     }
 

@@ -62,6 +62,8 @@ class PurchaseOrderService
                 $purchase = PurchaseOrder::create($data);
                 $purchase->details()->createMany($details);
 
+                echo "Purchase Order Down Payment: " . $purchase->down_payment;
+
                 event(new PurchaseOrderCreated($purchase));
 
                 return $purchase;

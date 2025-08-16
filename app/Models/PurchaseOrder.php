@@ -12,7 +12,7 @@ class PurchaseOrder extends Model
 	public $keyType = 'string';
 
     protected $fillable = ['supplier', 'user_id', 'purchase_discount', 'purchase_number',
-	'total', 'shipping_cost', 'shipping_cost_per_item', 'state', 'date', 'payment_category_id'];
+	'total', 'shipping_cost', 'shipping_cost_per_item', 'state', 'date', 'payment_category_id', 'down_payment'];
 
     protected $attributes = ['state' => "active"];
 
@@ -20,6 +20,7 @@ class PurchaseOrder extends Model
         'purchase_discount' => 'float',
 		'total' => 'float',
 		'shipping_cost' => 'float',
+		'down_payment' => 'float',
 		'date' => 'date'
     ];
 
