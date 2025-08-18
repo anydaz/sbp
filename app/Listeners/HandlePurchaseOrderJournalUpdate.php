@@ -5,12 +5,20 @@ namespace App\Listeners;
 use App\Events\PurchaseOrderUpdated;
 use App\Models\Account;
 use App\Models\JournalBatch;
+use App\Services\JournalService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
 class HandlePurchaseOrderJournalUpdate implements ShouldQueue
 {
     public $tries = 3;
+
+    protected $journalService;
+
+    public function __construct(JournalService $journalService)
+    {
+        $this->journalService = $journalService;
+    }
 
     public function handle(PurchaseOrderUpdated $event)
     {
@@ -20,94 +28,18 @@ class HandlePurchaseOrderJournalUpdate implements ShouldQueue
         $accountPayableAccountId = Account::where('code', '2001')->first()->id; // Accounts Payable
         $inventoryInTransitAccountId = Account::where('code', '1005')->first()->id; // Inventory in Transit
 
-        // Determine payment types for both original and new purchase orders
-        $originalPaymentType = $originalPurchaseOrder->payment_category_id == 1 ? 'cash' : 'credit';
+        // Determine payment type for new purchase order
         $newPaymentType = $purchaseOrder->payment_category_id == 1 ? 'cash' : 'credit';
 
-        DB::transaction(function () use ($purchaseOrder, $originalPurchaseOrder, $cashAccountId, $accountPayableAccountId, $inventoryInTransitAccountId, $originalPaymentType, $newPaymentType) {
-            // First create reversal entries for the original purchase order
-            $reversalBatch = JournalBatch::create([
-                'date' => now(),
-                'description' => 'Purchase reversal for update #' . $purchaseOrder->purchase_number,
-                'reference_type' => 'PurchaseOrder',
-                'reference_id' => $purchaseOrder->id,
-            ]);
+        DB::transaction(function () use ($purchaseOrder, $cashAccountId, $accountPayableAccountId, $inventoryInTransitAccountId, $newPaymentType) {
+            // Reverse all existing journal entries for this purchase order
+            $this->journalService->reverseJournalEntries(
+                'PurchaseOrder',
+                $purchaseOrder->id,
+                'Purchase reversal for update #' . $purchaseOrder->purchase_number
+            );
 
-            $reversalEntries = [
-                // Reverse original inventory in transit (credit to reverse the original debit)
-                [
-                    'account_id' => $inventoryInTransitAccountId,
-                    'debit' => 0,
-                    'credit' => $originalPurchaseOrder->total,
-                    'reference_type' => 'PurchaseOrder',
-                    'reference_id' => $purchaseOrder->id,
-                    'description' => 'Reverse inventory in transit for updated purchase',
-                    'date' => now(),
-                ]
-            ];
-
-            if ($originalPaymentType == 'cash') {
-                // Reverse original cash payment (debit to reverse the original credit)
-                $reversalEntries[] = [
-                    'account_id' => $cashAccountId,
-                    'debit' => $originalPurchaseOrder->total,
-                    'credit' => 0,
-                    'reference_type' => 'PurchaseOrder',
-                    'reference_id' => $purchaseOrder->id,
-                    'description' => 'Reverse cash paid for updated purchase',
-                    'date' => now(),
-                ];
-            } else {
-                // For original credit purchases, reverse based on down payment
-                if ($originalPurchaseOrder->down_payment > 0) {
-                    // Reverse original down payment
-                    $reversalEntries[] = [
-                        'account_id' => $cashAccountId,
-                        'debit' => $originalPurchaseOrder->down_payment,
-                        'credit' => 0,
-                        'reference_type' => 'PurchaseOrder',
-                        'reference_id' => $purchaseOrder->id,
-                        'description' => 'Reverse cash down payment for updated purchase',
-                        'date' => now(),
-                    ];
-
-                    // Reverse original remaining accounts payable
-                    $originalRemainingBalance = $originalPurchaseOrder->total - $originalPurchaseOrder->down_payment;
-                    if ($originalRemainingBalance > 0) {
-                        $reversalEntries[] = [
-                            'account_id' => $accountPayableAccountId,
-                            'debit' => $originalRemainingBalance,
-                            'credit' => 0,
-                            'reference_type' => 'PurchaseOrder',
-                            'reference_id' => $purchaseOrder->id,
-                            'description' => 'Reverse remaining balance payable for updated purchase',
-                            'date' => now(),
-                        ];
-                    }
-                } else {
-                    // Reverse original full accounts payable
-                    $reversalEntries[] = [
-                        'account_id' => $accountPayableAccountId,
-                        'debit' => $originalPurchaseOrder->total,
-                        'credit' => 0,
-                        'reference_type' => 'PurchaseOrder',
-                        'reference_id' => $purchaseOrder->id,
-                        'description' => 'Reverse accounts payable for updated purchase',
-                        'date' => now(),
-                    ];
-                }
-            }
-
-            $reversalBatch->entries()->createMany($reversalEntries);
-
-            // Then create new entries based on the updated purchase order
-            $batch = JournalBatch::create([
-                'date' => $purchaseOrder->date,
-                'description' => 'Updated purchase transaction #' . $purchaseOrder->purchase_number,
-                'reference_type' => 'PurchaseOrder',
-                'reference_id' => $purchaseOrder->id,
-            ]);
-
+            // Create new entries based on the updated purchase order
             $journalEntries = [
                 [
                     'account_id' => $inventoryInTransitAccountId,
@@ -172,7 +104,13 @@ class HandlePurchaseOrderJournalUpdate implements ShouldQueue
                 }
             }
 
-            $batch->entries()->createMany($journalEntries);
+            // Create the new journal batch with entries
+            $this->journalService->createJournalBatch([
+                'date' => $purchaseOrder->date,
+                'description' => 'Updated purchase transaction #' . $purchaseOrder->purchase_number,
+                'reference_type' => 'PurchaseOrder',
+                'reference_id' => $purchaseOrder->id,
+            ], $journalEntries);
         });
     }
 
