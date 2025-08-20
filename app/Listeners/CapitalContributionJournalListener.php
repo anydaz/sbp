@@ -6,57 +6,66 @@ use App\Events\CapitalContributionCreated;
 use App\Events\CapitalContributionUpdated;
 use App\Events\CapitalContributionDeleted;
 
-use App\Models\JournalEntry;
-use App\Models\JournalBatch;
+use App\Services\JournalService;
 use App\Models\Account;
 
 class CapitalContributionJournalListener
 {
+    protected $journalService;
+
+    public function __construct(JournalService $journalService)
+    {
+        $this->journalService = $journalService;
+    }
+
     public function handleCreated(CapitalContributionCreated $event)
     {
         $contribution = $event->contribution;
 
-        $cashAccountId = Account::where('code', '1001')->first()->id; // Assuming '1001' is the cash account code
-        $equityAccountId = Account::where('code', '3001')->first()->id; // Assuming '3001' is the owner's equity account code
+        $cashAccountId = Account::where('code', '1001')->first()->id; // Cash account
+        $equityAccountId = Account::where('code', '3001')->first()->id; // Owner's equity account
 
-        $batch = JournalBatch::create([
-            'date' => now(),
-            'description' => 'Capital Contribution: ' . $contribution->notes,
-            'reference_type' => 'CapitalContribution',
-            'reference_id' => $contribution->id,
-        ]);
-
-        $batch->entries()->createMany([
+        $journalEntries = [
             [
-                'date' => now(),
                 'account_id' => $cashAccountId,
                 'debit' => $contribution->amount,
-                'reference_type' => 'CapitalContribution',
-                'reference_id' => $contribution->id,
+                'credit' => 0,
                 'description' => 'Capital Contribution: ' . $contribution->notes,
-                'credit' => 0
             ],
             [
-                'date' => now(),
                 'account_id' => $equityAccountId,
                 'debit' => 0,
-                'reference_type' => 'CapitalContribution',
-                'reference_id' => $contribution->id,
+                'credit' => $contribution->amount,
                 'description' => 'Capital Contribution: ' . $contribution->notes,
-                'credit' => $contribution->amount
             ]
-        ]);
+        ];
 
+        $this->journalService->createJournalBatch(
+            $contribution->date ?? now(),
+            'Capital Contribution: ' . $contribution->notes,
+            'CapitalContribution',
+            $contribution->id,
+            $journalEntries
+        );
     }
 
     public function handleUpdated(CapitalContributionUpdated $event)
     {
+        $contribution = $event->contribution;
 
+        // Reverse previous journal entries before creating new ones
+        $this->journalService->reverseJournalEntries('CapitalContribution', $contribution->id);
+
+        // Create new journal entries with updated values
+        $this->handleCreated(new CapitalContributionCreated($contribution));
     }
 
     public function handleDeleted(CapitalContributionDeleted $event)
     {
+        $contribution = $event->contribution;
 
+        // Reverse all journal entries for this capital contribution
+        $this->journalService->reverseJournalEntries('CapitalContribution', $contribution->id);
     }
 
     public function subscribe($events)
