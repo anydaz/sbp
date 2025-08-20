@@ -4,74 +4,78 @@ namespace App\Listeners;
 
 use App\Events\SalesOrderCreated;
 use App\Models\Account;
-use App\Models\JournalEntry;
-use Illuminate\Support\Facades\DB;
-use App\Models\JournalBatch;
-
+use App\Services\JournalService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
 class CreateJournalEntry implements ShouldQueue
 {
     public $tries = 3;
+
+    protected $journalService;
+
+    public function __construct(JournalService $journalService)
+    {
+        $this->journalService = $journalService;
+    }
+
     public function handle(SalesOrderCreated $event)
     {
         $salesOrder = $event->salesOrder;
 
-        DB::transaction(function () use ($salesOrder) {
+        $cashAccountId = Account::where('code', '1001')->first()->id; // Cash
+        $accountReceivableAccountId = Account::where('code', '1003')->first()->id; // Accounts Receivable
+        $salesRevenueAccountId = Account::where('code', '4001')->first()->id; // Sales Revenue
+        $cogsAccountId = Account::where('code', '5001')->first()->id; // COGS
+        $inventoryAccountId = Account::where('code', '1004')->first()->id; // Inventory
+        $type = $salesOrder->payment_category_id == 1 ? 'cash' : 'credit';
 
-            $cashAccountId = Account::where('code', '1001')->first()->id; // Assuming '1001' is the cash account code
-            $accountReceivableAccountId = Account::where('code', '1003')->first()->id; // Assuming '1003' is the accounts receivable account code
-            $salesRevenueAccountId = Account::where('code', '4001')->first()->id; // Assuming '4001' is the sales revenue account code
-            $cogsAccountId = Account::where('code', '5001')->first()->id; // Assuming '5001' is the COGS account code
-            $inventoryAccountId = Account::where('code', '1004')->first()->id; // Assuming '1004' is the inventory account code
-            $type = $salesOrder->payment_category_id == 1 ? 'cash' : 'credit';
-
-            $batch = JournalBatch::create([
-                'date' => now(),
-                'description' => 'Sale transaction #' . $salesOrder->sales_number,
+        // Prepare journal entries for sales order creation
+        $journalEntries = [
+            [
+                'account_id' => $type == 'cash' ? $cashAccountId : $accountReceivableAccountId,
+                'debit' => $salesOrder->total,
+                'credit' => 0,
                 'reference_type' => 'SalesOrder',
                 'reference_id' => $salesOrder->id,
-            ]);
+                'description' => $type == 'cash' ? 'Cash received for sale' : 'Accounts receivable for sale',
+                'date' => now(),
+            ],
+            [
+                'account_id' => $cogsAccountId,
+                'debit' => $salesOrder->total_cogs,
+                'credit' => 0,
+                'reference_type' => 'SalesOrder',
+                'reference_id' => $salesOrder->id,
+                'description' => 'COGS for sale',
+                'date' => now(),
+            ],
+            [
+                'account_id' => $salesRevenueAccountId,
+                'debit' => 0,
+                'credit' => $salesOrder->total,
+                'reference_type' => 'SalesOrder',
+                'reference_id' => $salesOrder->id,
+                'description' => 'Revenue from sale',
+                'date' => now(),
+            ],
+            [
+                'account_id' => $inventoryAccountId,
+                'debit' => 0,
+                'credit' => $salesOrder->total_cogs,
+                'reference_type' => 'SalesOrder',
+                'reference_id' => $salesOrder->id,
+                'description' => 'Inventory reduction for sale',
+                'date' => now(),
+            ]
+        ];
 
-            $batch->entries()->createMany([
-                [
-                    'account_id' => $type == 'cash' ? $cashAccountId : $accountReceivableAccountId,
-                    'debit' => $salesOrder->total,
-                    'credit' => 0,
-                    'reference_type' => 'SalesOrder',
-                    'reference_id' => $salesOrder->id,
-                    'description' => 'Cash received for sale',
-                    'date' => now(),
-                ],
-                [
-                    'account_id' => $cogsAccountId,
-                    'debit' => $salesOrder->total_cogs,
-                    'credit' => 0,
-                    'reference_type' => 'SalesOrder',
-                    'reference_id' => $salesOrder->id,
-                    'description' => 'COGS for sale',
-                    'date' => now(),
-                ],
-                [
-                    'account_id' => $salesRevenueAccountId,
-                    'debit' => 0,
-                    'credit' => $salesOrder->total,
-                    'reference_type' => 'SalesOrder',
-                    'reference_id' => $salesOrder->id,
-                    'description' => 'Revenue from sale',
-                    'date' => now(),
-                ],
-                [
-                    'account_id' => $inventoryAccountId,
-                    'debit' => 0,
-                    'credit' => $salesOrder->total_cogs,
-                    'reference_type' => 'SalesOrder',
-                    'reference_id' => $salesOrder->id,
-                    'description' => 'Inventory reduction for sale',
-                    'date' => now(),
-                ],
-            ]);
-        });
+        // Create the journal batch with entries using the service
+        $this->journalService->createJournalBatch([
+            'date' => now(),
+            'description' => 'Sale transaction #' . $salesOrder->sales_number,
+            'reference_type' => 'SalesOrder',
+            'reference_id' => $salesOrder->id,
+        ], $journalEntries);
     }
 
     public function failed(SalesOrderCreated $event, $exception)
