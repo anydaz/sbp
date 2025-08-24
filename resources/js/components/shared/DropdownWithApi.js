@@ -110,7 +110,9 @@ const DropdownWithApi = ({
         if (type == "product") {
             return (
                 <>
-                    <p>{data.name}</p>
+                    <p>
+                        {data.name} ({data.quantity})
+                    </p>
                     <p className="text-xs text-gray-400">
                         {" "}
                         {data.code}

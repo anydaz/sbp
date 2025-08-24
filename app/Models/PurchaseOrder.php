@@ -47,6 +47,11 @@ class PurchaseOrder extends Model
 		return $this->belongsTo(PaymentCategory::class);
 	}
 
+	public function purchase_payments()
+	{
+		return $this->hasMany(PurchasePayment::class)->active();
+	}
+
 	public function scopeActive($query)
 	{
 		return $query->where('state', 'active');

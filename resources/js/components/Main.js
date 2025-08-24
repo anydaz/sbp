@@ -36,6 +36,8 @@ import BalanceSheet from "./pages/BalanceSheet.js";
 import CapitalContribution from "./pages/CapitalContribution.js";
 import ProductLog from "./pages/ProductLog.js";
 import ExpenseTransaction from "./pages/ExpenseTransaction.js";
+import PurchasePayment from "./pages/PurchasePayment.js";
+import CreatePurchasePayment from "./pages/CreatePurchasePayment.js";
 
 const ROLE_DICT = {
     sales: "Staff Sales",
@@ -161,9 +163,19 @@ const ROUTES = [
         component: PurchaseReturn,
     },
     {
-        role: "cashier",
+        role: "backoffice",
         path: ["/purchase-return/create", "/purchase-return/edit/:id"],
         component: CreatePurchaseReturn,
+    },
+    {
+        role: "backoffice",
+        path: "/purchase-payment",
+        component: PurchasePayment,
+    },
+    {
+        role: "backoffice",
+        path: ["/purchase-payment/create", "/purchase-payment/edit/:id"],
+        component: CreatePurchasePayment,
     },
     {
         role: "admin",
@@ -351,6 +363,28 @@ function Main() {
                                             icon="RotateCcw"
                                             onClick={() =>
                                                 history.push("/purchase-return")
+                                            }
+                                        />
+                                    )}
+                                    {isAllowedFor("backoffice") && (
+                                        <MenuItem
+                                            title="Pembayaran Pembelian"
+                                            icon="CreditCard"
+                                            onClick={() =>
+                                                history.push(
+                                                    "/purchase-payment"
+                                                )
+                                            }
+                                        />
+                                    )}
+                                    {isAllowedFor("backoffice") && (
+                                        <MenuItem
+                                            title="Pembayaran Pembelian"
+                                            icon="DollarSign"
+                                            onClick={() =>
+                                                history.push(
+                                                    "/purchase-payment"
+                                                )
                                             }
                                         />
                                     )}

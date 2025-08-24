@@ -63,6 +63,15 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\DeliveryNoteDeleted::class => [
             \App\Listeners\HandleDeliveryNoteJournalDeletion::class,
         ],
+        \App\Events\PurchasePaymentCreated::class => [
+            [\App\Listeners\PurchasePaymentJournalListener::class, 'handleCreated'],
+        ],
+        \App\Events\PurchasePaymentUpdated::class => [
+            [\App\Listeners\PurchasePaymentJournalListener::class, 'handleUpdated'],
+        ],
+        \App\Events\PurchasePaymentDeleted::class => [
+            [\App\Listeners\PurchasePaymentJournalListener::class, 'handleDeleted'],
+        ],
     ];
 
     /**

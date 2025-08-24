@@ -27,26 +27,32 @@ class CapitalContributionJournalListener
 
         $journalEntries = [
             [
+                'date' => $contribution->date,
                 'account_id' => $cashAccountId,
                 'debit' => $contribution->amount,
                 'credit' => 0,
+                'reference_type' => 'CapitalContribution',
+                'reference_id' => $contribution->id,
                 'description' => 'Capital Contribution: ' . $contribution->notes,
             ],
             [
+                'date' => $contribution->date,
                 'account_id' => $equityAccountId,
                 'debit' => 0,
                 'credit' => $contribution->amount,
+                'reference_type' => 'CapitalContribution',
+                'reference_id' => $contribution->id,
                 'description' => 'Capital Contribution: ' . $contribution->notes,
             ]
         ];
 
-        $this->journalService->createJournalBatch(
-            $contribution->date ?? now(),
-            'Capital Contribution: ' . $contribution->notes,
-            'CapitalContribution',
-            $contribution->id,
-            $journalEntries
-        );
+        // Create the journal batch with entries using the service
+        $this->journalService->createJournalBatch([
+            'date' => $contribution->date,
+            'description' => 'Capital Contribution: ' . $contribution->notes,
+            'reference_type' => 'CapitalContribution',
+            'reference_id' => $contribution->id,
+        ], $journalEntries);
     }
 
     public function handleUpdated(CapitalContributionUpdated $event)
@@ -54,7 +60,11 @@ class CapitalContributionJournalListener
         $contribution = $event->contribution;
 
         // Reverse previous journal entries before creating new ones
-        $this->journalService->reverseJournalEntries('CapitalContribution', $contribution->id);
+        $this->journalService->reverseJournalEntries(
+            'CapitalContribution',
+            $contribution->id,
+            'Capital Contribution update reversal: ' . $contribution->notes
+        );
 
         // Create new journal entries with updated values
         $this->handleCreated(new CapitalContributionCreated($contribution));
@@ -65,7 +75,11 @@ class CapitalContributionJournalListener
         $contribution = $event->contribution;
 
         // Reverse all journal entries for this capital contribution
-        $this->journalService->reverseJournalEntries('CapitalContribution', $contribution->id);
+        $this->journalService->reverseJournalEntries(
+            'CapitalContribution',
+            $contribution->id,
+            'Capital Contribution deletion reversal: ' . $contribution->notes
+        );
     }
 
     public function subscribe($events)

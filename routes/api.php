@@ -43,6 +43,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
 	Route::resource('delivery_notes', 'App\Http\Controllers\DeliveryNoteController');
 	Route::resource('purchase_returns', 'App\Http\Controllers\PurchaseReturnController');
 
+	// Purchase Payment routes
+	Route::resource('purchase_payments', 'App\Http\Controllers\PurchasePaymentController');
+	Route::get('purchase-orders/credit', 'App\Http\Controllers\PurchasePaymentController@getCreditPurchaseOrders');
+	Route::get('purchase-orders/{id}/payment-info', 'App\Http\Controllers\PurchasePaymentController@getPurchaseOrderPaymentInfo');
+
 	Route::resource('journal_batches', 'App\Http\Controllers\JournalBatchController');
 
 	Route::post('products/new/import', 'App\Http\Controllers\ProductController@import_new');
