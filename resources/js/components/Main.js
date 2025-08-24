@@ -32,6 +32,7 @@ import ProductCategory from "./pages/ProductCategory.js";
 import CreateProductCategory from "./pages/CreateProductCategory.js";
 import Journal from "./pages/Journal.js";
 import Ledger from "./pages/Ledger.js";
+import BalanceSheet from "./pages/BalanceSheet.js";
 import CapitalContribution from "./pages/CapitalContribution.js";
 import ProductLog from "./pages/ProductLog.js";
 import ExpenseTransaction from "./pages/ExpenseTransaction.js";
@@ -188,6 +189,11 @@ const ROUTES = [
         role: "admin",
         path: "/ledger",
         component: Ledger,
+    },
+    {
+        role: "admin",
+        path: "/balance-sheet",
+        component: BalanceSheet,
     },
     {
         role: "admin",
@@ -473,6 +479,15 @@ function Main() {
                                             icon="BookOpen"
                                             onClick={() =>
                                                 history.push("/ledger")
+                                            }
+                                        />
+                                    )}
+                                    {isAllowedFor("admin") && (
+                                        <MenuItem
+                                            title="Neraca Keuangan"
+                                            icon="BarChart"
+                                            onClick={() =>
+                                                history.push("/balance-sheet")
                                             }
                                         />
                                     )}

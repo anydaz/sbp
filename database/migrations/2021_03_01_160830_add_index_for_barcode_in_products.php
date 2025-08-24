@@ -26,7 +26,7 @@ class AddIndexForBarcodeInProducts extends Migration
     public function down()
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->dropUnique('products_barcode_unique');
+            // $table->dropUnique('products_barcode_unique');
         });
     }
 }

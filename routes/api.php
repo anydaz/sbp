@@ -73,5 +73,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 	Route::apiResource('expense-transactions', 'App\Http\Controllers\ExpenseTransactionController');
 
+	// Account Balance routes
+	Route::get('account-balances/balance-sheet', 'App\Http\Controllers\AccountBalanceController@balanceSheet');
+	Route::get('account-balances/assets', 'App\Http\Controllers\AccountBalanceController@assets');
+	Route::get('account-balances/liabilities', 'App\Http\Controllers\AccountBalanceController@liabilities');
+	Route::get('account-balances/equity', 'App\Http\Controllers\AccountBalanceController@equity');
+	Route::get('account-balances/trial-balance', 'App\Http\Controllers\AccountBalanceController@trialBalance');
+	Route::get('account-balances/grouped', 'App\Http\Controllers\AccountBalanceController@groupedBalances');
+	Route::post('account-balances/calculate', 'App\Http\Controllers\AccountBalanceController@calculateBalances');
+	Route::post('account-balances/rebuild', 'App\Http\Controllers\AccountBalanceController@rebuildBalances');
+
 	Route::post('/print', 'App\Http\Controllers\PrintController@print');
 });
